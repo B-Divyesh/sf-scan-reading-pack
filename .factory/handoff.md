@@ -1,5 +1,19 @@
 # Scan Reading Pack — build handoff
 
+## Independent verification status — **FAIL** (2026-08-28)
+
+Candidate `1477079d1a425f237379feb1a23d3f1e47f25c7d` was independently tested
+against https://scan-reading-pack.sociobot.in from a fresh install. It **fails
+release acceptance** despite a working local conversion flow and matching live
+assets. The required `.factory/claims.json` is missing, so the mandatory
+demo-entry claim tests do not exist. The live first screen has no “Try it with
+sample data” action; `/demo` and `/?demo=1` are ordinary empty landing pages,
+with no sample data, demo banner/reset controls, isolation, or `.factory/demo.md`.
+
+See [`.factory/verification.md`](verification.md) for exact commands, test
+results, live hash evidence, and defects by severity. Do not promote this
+candidate until its Critical findings are repaired and independently retested.
+
 ## Delivered
 
 - Finished Vite + TypeScript offline PWA for PDF, PNG, JPEG, and WebP scans.
