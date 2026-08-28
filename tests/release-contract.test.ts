@@ -9,11 +9,16 @@ describe('release contract regressions', () => {
   it('ships the verifier-required claim and demo documents', () => {
     const claims = JSON.parse(read('.factory/claims.json')) as Array<{ id: string; test: string }>;
     expect(claims.map((claim) => claim.id)).toEqual(expect.arrayContaining([
-      'demo-sandbox', 'offline-reload', 'source-trace', 'pack-export', 'browser-private',
+      'demo-sandbox', 'offline-reload', 'source-trace', 'pack-export', 'browser-private', 'no-third-party-runtime',
       'scan-import', 'scan-file-types', 'figure-crop', 'correction-queue', 'project-backup',
       'local-ocr', 'five-page-free-limit', 'one-time-unlock',
     ]));
-    for (const claim of claims) expect(read('tests/e2e/app.spec.ts')).toContain(`@claim:${claim.id}`);
+    const browserTests = read('tests/e2e/app.spec.ts');
+    for (const claim of claims) {
+      const tag = `@claim:${claim.id}`;
+      expect(browserTests).toContain(tag);
+      expect(browserTests.split(tag)).toHaveLength(2);
+    }
     expect(read('.factory/demo.md')).toContain('demo:scan-reading-pack');
   });
 

@@ -4,3 +4,46 @@
   z-index: 1;
   background: var(--ink);
 }
+
+/* Every demo and trace control keeps a 44px keyboard and touch target. */
+.demo-banner .text-button,
+.demo-real-button,
+.trace-button {
+  min-height: 44px;
+}
+
+.trace-button {
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+/* Long price and license copy must reflow instead of widening a phone layout. */
+.pricing-section,
+.pricing-section > *,
+.license-panel,
+.license-panel form,
+.license-panel form > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.license-panel {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.license-panel .primary-button,
+.license-panel .secondary-button {
+  white-space: normal;
+}
+
+@media (max-width: 560px) {
+  .pricing-section { display: block; }
+  .pricing-section > div + div { margin-top: 32px; }
+  .license-panel form > div,
+  .license-panel input,
+  .license-panel button,
+  .license-panel a { max-width: 100%; }
+}

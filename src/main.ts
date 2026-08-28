@@ -42,7 +42,7 @@ function escapeHtml(value: string): string {
 
 function header(back = false): string {
   return `<header class="site-header">
-    <a class="brand" href="/" aria-label="Scan Reading Pack home"><span class="brand-mark">SR</span><span>Scan Reading Pack</span></a>
+    <a class="brand" href="/"><span class="brand-mark">SR</span><span>Scan Reading Pack</span></a>
     <nav aria-label="Primary">
       ${back ? '<button class="text-button" id="back-home">← Library</button>' : '<a href="#how">How it works</a>'}
       <a href="/demo/">Demo</a>
@@ -84,7 +84,7 @@ function landing(): void {
         </div>
         <div class="import-actions"><label class="text-button file-button" for="file-input">${icon('scan')} Choose your scans</label><span>PDF, PNG, JPEG or WebP</span></div>
         <input class="visually-hidden" id="file-input" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" multiple />
-        <ul class="hero-facts"><li>Sample data uses its own workspace.</li><li>Pages stay in this browser.</li><li>Works offline after the first visit.</li></ul>
+        <ul class="hero-facts"><li>Sample data uses its own workspace.</li><li>Pages stay in this browser.</li><li>Cached OCR works offline.</li></ul>
         <p class="trust-note">${icon('lock')} Only process material you have the right to use.</p>
       </div>
       <figure class="hero-art">
@@ -102,7 +102,7 @@ function landing(): void {
     <section class="steps-section" id="how" aria-labelledby="how-title">
       <p class="eyebrow"><span>03</span> From image to evidence</p><h2 id="how-title">A reading pack, not a text dump</h2>
       <ol class="steps">
-        <li><span>01</span>${icon('scan')}<h3>Recognize locally</h3><p>English OCR runs in your browser. The first use downloads the language model; later work can stay offline.</p></li>
+        <li><span>01</span>${icon('scan')}<h3>Recognize locally</h3><p>English OCR runs in your browser. The first use caches language files for later offline work.</p></li>
         <li><span>02</span>${icon('trace')}<h3>Follow the trace</h3><p>Select any line to reveal its source page and exact region. Extract figures with a crop gesture.</p></li>
         <li><span>03</span>${icon('check')}<h3>Review uncertainty</h3><p>Low-confidence lines form a short correction queue. Changed lines keep their original confidence.</p></li>
         <li><span>04</span>${icon('audio')}<h3>Pack for reading</h3><p>Export Markdown, HTML, figures, coordinates, plain text, and optional SSML in one ZIP.</p></li>
@@ -315,7 +315,6 @@ async function importFiles(event: Event): Promise<void> {
     error = '';
     notice = `${pages.length} source page${pages.length === 1 ? '' : 's'} ready.`;
   } catch (reason) {
-    console.error(reason);
     error = 'Those files could not be opened. Use an unencrypted PDF, PNG, JPEG, or WebP scan.';
     active = null;
   }
@@ -542,7 +541,15 @@ async function start(): Promise<void> {
       const toast = document.createElement('div'); toast.className = 'update-toast'; toast.innerHTML = '<span>A new workbench version is ready.</span><button>Update now</button>';
       toast.querySelector('button')!.addEventListener('click', () => updateSW(true)); document.body.append(toast);
     },
-    onOfflineReady() { notice = 'App shell cached. You can reopen it offline.'; const region = document.querySelector('#live-status'); if (region) region.textContent = notice; },
+    onOfflineReady() {
+      // Do not let delayed service-worker readiness overwrite the result of a
+      // user action such as importing or restoring a project.
+      if (!notice) {
+        notice = 'App shell cached. You can reopen it offline.';
+        const region = document.querySelector('#live-status');
+        if (region) region.textContent = notice;
+      }
+    },
   });
 }
 

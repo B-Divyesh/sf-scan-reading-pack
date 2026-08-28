@@ -1,55 +1,72 @@
-# Scan Reading Pack — independent verification 4 handoff
+# Scan Reading Pack — repair 4 handoff
 
-## Release status: FAIL
+## Release status: READY FOR STATIC DEPLOY
 
-**Do not release candidate
-`4402b065e3c6102e8a05d956040130bb3eee5227`.** The deployment at
-https://scan-reading-pack.sociobot.in is byte-for-byte this candidate, and its
-core flow plus all existing automated gates pass, but fresh acceptance checks
-found release-blocking accessibility and claims-contract defects.
+This repair addresses every release-blocking finding in independent verification
+4 for candidate `4402b065e3c6102e8a05d956040130bb3eee5227` while preserving the
+Vite + TypeScript offline PWA and its local-first workflow.
 
-The full evidence and exact measurements are in
-[`verification-4.md`](verification-4.md).
+## Repairs
 
-## Release blockers
+1. Every visible 390px demo and source-trace control now has a 44px minimum
+   target. The mobile regression measures every visible link, button, and file
+   label in the populated demo.
+2. The wordmark has no competing `aria-label`; its accessible name now derives
+   from its visible text (`SR Scan Reading Pack` on desktop, `SR` when the
+   longer wordmark is visually hidden on mobile). The experimental Axe
+   `label-content-name-mismatch` rule passes at both sizes.
+3. The pricing/license section has explicit min-width, wrapping, and narrow
+   layout rules. At 390px with root text at 200%, document width remains equal
+   to viewport width.
+4. The claim contract now proves actual cached offline OCR, all five sample
+   source traces, OCR request methods/paths (no upload or telemetry request),
+   and the no-analytics/no-runtime-CDN promise. It adds
+   `no-third-party-runtime` and narrows offline copy to the observable cached
+   OCR behavior.
+5. Handled unsupported imports no longer write an error stack to the browser
+   console. A delayed service-worker ready notice also no longer overwrites a
+   completed project-restore status.
+6. Playwright now owns its release preview server rather than attaching to a
+   transient server from another browser command.
 
-1. At 390px, the two demo-banner controls are only 40px high and the five
-   source-trace buttons are 25px high. All interactive targets must be at least
-   44×44 CSS pixels.
-2. Explicit Axe and Lighthouse runs report a serious
-   `label-content-name-mismatch` on the desktop and mobile brand: visible “SR”
-   is absent from `aria-label="Scan Reading Pack home"`.
-3. At 390px and 200% text size, the landing page becomes 454px wide and
-   overflows horizontally by 64px, centered on the pricing/license panel.
-4. Broader public claims about no uploads/no tracking and later offline OCR are
-   not proved by exact claim tests. The current privacy test does not run OCR;
-   the offline test only reloads the pre-seeded demo. The “every sample line”
-   trace claim tests only line 2.
+## Verification evidence
 
-Low severity: handled unsupported-file input produces the right recoverable
-alert but also writes an error stack to the console.
+All commands ran from `/work/repo` after a clean `npm ci` (403 packages, 0
+audit vulnerabilities):
 
-## What passed
+- `npm test` — 7 passing Vitest tests.
+- `npm run lint` — TypeScript `--noEmit` passed.
+- `npm run build` — passed; `dist/` produced with `index.html` at its root and
+  a 22-entry PWA precache (624.67 KiB).
+- `npm run test:e2e` — 32 passed, 8 intentional single-viewport skips, 0
+  failures. This includes desktop and 390px mobile, keyboard skip-link and
+  Enter trace use, default Axe, experimental label-in-name Axe, import/PDF,
+  OCR, correction, trace, crop, export, backup, free/paid limits, offline
+  shell and cached offline OCR, privacy traffic, and responsive checks.
+- Every exact command in `.factory/claims.json` was separately run after the
+  clean install. All passed; desktop-only OCR-heavy checks intentionally skip
+  the mobile project and pass in Chromium.
+- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/ <temp-dir>` — HTTP 200,
+  title, `lang=en`, one H1, main landmark, complete image alt text, labelled
+  buttons, and zero browser console errors; local load measured 656 ms.
+- Playwright Axe integration reports no serious/critical violations. The
+  standalone Axe CLI was attempted but cannot locate a Selenium Chrome binary
+  in this worker; the Playwright Axe integration (including the experimental
+  label-in-name rule) is the completed check here.
+- Lighthouse against the production build, using the installed Chromium:
+  Performance 99, Accessibility 100, Best Practices 100, SEO 100; LCP
+  1862 ms, TBT 0 ms, CLS 0.00013.
+- Desktop and 390px smoke checks passed for `/`, `/demo/`, `/privacy/`,
+  `/terms/`, and the designed missing-route page: one H1, main landmark,
+  no console errors, and no horizontal overflow. Vite preview returns its SPA
+  shell for missing routes; production Static Web Apps applies the checked
+  `staticwebapp.config.json` response override with HTTP 404.
+- Response-policy configuration check passed: self-only CSP, referrer policy,
+  nosniff/frame/permissions headers, immutable `/assets/*` cache policy, and
+  a real `/404.html` 404 response override are in both root and `public/`
+  configurations.
 
-- First-read gate and one-click isolated demo.
-- All 13 exact `.factory/claims.json` commands after a clean `npm ci`.
-- `npm test` (7/7), `npm run lint`, `npm run build`, and `npm run test:e2e`
-  (29 passed, 5 intentional skips).
-- End-to-end image/PDF import, local OCR, correction, trace, figure crop,
-  backup/restore, ZIP export, free-page limit, and recorded paid unlock.
-- Personal/demo IndexedDB separation and demo deletion on **Start for real**.
-- Live offline reload and offline OCR after model caching; service-worker
-  registration/update; Chrome manifest parsing/installability.
-- Live identity for HTML, main JS/CSS, and service worker; secure headers,
-  immutable asset cache, and real HTTP 404.
-- Billing checkout via Sociobot and rate limiting: first 429 at request 31 with
-  `Retry-After: 4`.
-- Lighthouse mobile: performance 99, accessibility 100, best practices 100,
-  SEO 100; LCP 1.6 s, TBT 100 ms, CLS 0. The separate serious experimental
-  label-in-name audit still fails acceptance.
-- Initial JS/CSS/font/hero transfer budgets.
-
-## Reproduce
+## Run and deploy
 
 ```bash
 npm ci
@@ -59,7 +76,13 @@ npm run build
 npm run test:e2e
 ```
 
-Then audit every visible mobile control at 390×844, test the root at 200% text,
-run Lighthouse's `label-content-name-mismatch` audit, and extend claims/tests as
-specified in `verification-4.md`. Product code was not modified during this
-verification.
+Deploy the committed `dist/` output as the existing static application with
+the included `staticwebapp.config.json`. No infrastructure, DNS, billing, or
+third-party configuration was changed.
+
+## Known gaps
+
+None in the product repair. The standalone Selenium-based Axe CLI cannot run
+in this container because it does not discover the preinstalled Playwright
+Chromium; equivalent Playwright Axe coverage passed, including the formerly
+blocking experimental rule.

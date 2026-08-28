@@ -35,10 +35,11 @@ npm run test:e2e -- --grep @claim:offline-reload
 
 ## Privacy and purchase
 
-The demo’s requests stay on the same origin. Personal source pages and project
-data are stored in the browser. License verification and checkout use the
-Sociobot API only when a visitor chooses those actions. There are no analytics,
-tracking pixels, remote fonts, or runtime CDN scripts.
+Personal source pages and extracted text are never uploaded. OCR fetches only
+self-hosted app and language files, then can recognize later imports offline.
+The app has no analytics, tracking pixels, remote fonts, or runtime CDN
+scripts. License verification and checkout contact the Sociobot API only when
+a visitor chooses those actions.
 
 The free edition recognizes five pages per project and keeps correction,
 backup, and core reading-pack export available. A **$19 USD one-time unlock**

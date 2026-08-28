@@ -19,6 +19,9 @@ export default defineConfig({
   webServer: {
     command: 'npm run preview -- --port 4173',
     url: 'http://127.0.0.1:4173',
-    reuseExistingServer: true,
+    // The release suite must own its preview server. Reusing a process that is
+    // being torn down by another browser command can turn a clean run into
+    // intermittent connection-refused failures.
+    reuseExistingServer: false,
   },
 });

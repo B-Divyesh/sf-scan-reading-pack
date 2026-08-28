@@ -96,6 +96,17 @@ test('landing page is accessible and responsive', async ({ page }, testInfo) => 
   await page.screenshot({ path: testInfo.outputPath('landing.png'), fullPage: true });
 });
 
+test('@regression: brand visible name is included in its accessible name', async ({ page }) => {
+  await page.goto('/');
+  // The wordmark contracts to its visible SR monogram on a narrow screen.
+  await expect(page.locator('.brand')).toHaveAccessibleName(page.viewportSize()?.width === 390 ? 'SR' : /SR\s*Scan Reading Pack/);
+  const results = await new AxeBuilder({ page })
+    .withTags(['experimental'])
+    .withRules(['label-content-name-mismatch'])
+    .analyze();
+  expect(results.violations.filter((item) => item.id === 'label-content-name-mismatch')).toEqual([]);
+});
+
 test('@claim:scan-import imports a scan into the demo workspace and persists it', async ({ page }) => {
   await page.goto('/demo/');
   await page.getByRole('button', { name: '← Library' }).click();
@@ -180,19 +191,26 @@ test('@claim:project-backup downloads and restores the sample project', async ({
   await expect(page.getByRole('heading', { level: 1, name: /Night Reading Room/ })).toBeVisible();
 });
 
-test('@regression: a successful import clears an earlier invalid-import alert', async ({ page }, testInfo) => {
+test('@regression: invalid imports recover without a console error', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'One desktop recovery flow covers this import-state regression.');
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await page.goto('/demo/');
   await page.getByRole('button', { name: '← Library' }).click();
   const directory = mkdtempSync(join(tmpdir(), 'scan-reading-pack-'));
   const oversizedFile = join(directory, 'too-large.png');
+  const unsupportedFile = join(directory, 'unsupported.txt');
   writeFileSync(oversizedFile, Buffer.alloc(80 * 1024 * 1024 + 1));
+  writeFileSync(unsupportedFile, 'This is not an image.');
   try {
     await page.locator('#file-input').setInputFiles(oversizedFile);
     await expect(page.getByRole('alert')).toContainText('80 MB or smaller');
+    await page.locator('#file-input').setInputFiles(unsupportedFile);
+    await expect(page.getByRole('alert')).toContainText('could not be opened');
     await page.locator('#file-input').setInputFiles(path.resolve('tests/fixtures/sample-scan.png'));
     await expect(page.getByRole('heading', { level: 1, name: 'sample-scan' })).toBeVisible();
     await expect(page.getByRole('alert')).toHaveCount(0);
+    expect(consoleErrors).toEqual([]);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -239,23 +257,29 @@ test('@claim:demo-sandbox loads a one-click sample in an isolated workspace', as
   await expect(page.getByRole('heading', { level: 1, name: /Night Reading Room/ })).toBeVisible();
 });
 
-test('@claim:offline-reload keeps the sample reading pack available after the first visit', async ({ page, context }) => {
+test('@claim:offline-reload recognizes a later import offline after language files have cached', async ({ page, context }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'The browser OCR cache path runs once; the shared offline shell is covered on both viewports.');
   await page.goto('/demo/');
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.reload();
-  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  await page.getByRole('button', { name: 'Start for real' }).first().click();
+  await page.locator('#file-input').setInputFiles(path.resolve('tests/fixtures/sample-scan.png'));
+  await page.getByRole('button', { name: /Recognize this page/ }).click();
+  await expect(page.locator('textarea').first()).toContainText(/NIGHT|READING/i, { timeout: 90_000 });
+  await page.getByRole('button', { name: '← Library' }).click();
   await context.setOffline(true);
-  await page.reload();
+  await page.locator('#file-input').setInputFiles(path.resolve('tests/fixtures/sample-scan.png'));
+  await expect(page.getByRole('heading', { level: 1, name: 'sample-scan' })).toBeVisible();
+  await page.getByRole('button', { name: /Recognize this page/ }).click();
+  await expect(page.locator('textarea').first()).toContainText(/NIGHT|READING/i, { timeout: 90_000 });
   await expect(page.getByText('You’re offline')).toBeVisible();
-  await expect(page.getByRole('heading', { level: 1, name: /Night Reading Room/ })).toBeVisible();
-  await expect(page.getByLabel('Demo controls')).toBeVisible();
 });
 
-test('@claim:source-trace lights the matching sample page region', async ({ page }) => {
+test('@claim:source-trace lights the matching source region for every sample line', async ({ page }) => {
   await page.goto('/demo/');
-  await page.getByRole('button', { name: 'Show line 2 on source page' }).click();
-  await expect(page.locator('.source-highlight')).toBeVisible();
-  await expect(page.locator('.text-block.selected')).toContainText('At closing time');
+  for (let index = 1; index <= 5; index++) {
+    await page.getByRole('button', { name: `Show line ${index} on source page` }).click();
+    await expect(page.locator('.source-highlight')).toBeVisible();
+    await expect(page.locator('.text-block.selected')).toContainText(`L${index}`);
+  }
 });
 
 test('@claim:pack-export downloads a reading pack with text and page coordinates', async ({ page }) => {
@@ -271,18 +295,44 @@ test('@claim:pack-export downloads a reading pack with text and page coordinates
   expect(strFromU8(archive['source-map.json'])).toContain('demo-line-2');
 });
 
-test('@claim:browser-private keeps sample processing on the same origin', async ({ page }) => {
-  const requests: string[] = [];
-  page.on('request', (request) => requests.push(request.url()));
+test('@claim:browser-private keeps OCR input and output local without upload or telemetry requests', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'The local OCR request audit runs once; normal import remains covered on both viewports.');
+  const requests: Array<{ method: string; url: string }> = [];
+  page.on('request', (request) => requests.push({ method: request.method(), url: request.url() }));
   await page.goto('/demo/');
-  await expect(page.getByRole('heading', { level: 1, name: /Night Reading Room/ })).toBeVisible();
-  await page.getByRole('button', { name: '← Library' }).click();
+  await page.getByRole('button', { name: 'Start for real' }).first().click();
   await page.locator('#file-input').setInputFiles(path.resolve('tests/fixtures/sample-scan.png'));
   await expect(page.getByRole('heading', { level: 1, name: 'sample-scan' })).toBeVisible();
-  const origins = [...new Set(requests.filter((url) => url.startsWith('http')).map((url) => new URL(url).origin))];
-  expect(origins).toEqual(['http://127.0.0.1:4173']);
+  await page.getByRole('button', { name: /Recognize this page/ }).click();
+  await expect(page.locator('textarea').first()).toContainText(/NIGHT|READING/i, { timeout: 90_000 });
+  const origin = 'http://127.0.0.1:4173';
+  // Tesseract receives the selected source via a browser-created blob URL.
+  // Chromium exposes that local blob as a UUID path in Playwright's request
+  // observer; it is not an upload endpoint and has no network host change.
+  const allowed = /^\/(?:$|demo\/?$|assets\/|fonts\/|icons\/|ocr\/|tessdata\/|manifest\.webmanifest$|sw\.js$|workbox-[^/]+\.js$)/;
+  for (const request of requests) {
+    const url = new URL(request.url);
+    expect(url.origin).toBe(origin);
+    expect(request.method).toBe('GET');
+    if (url.protocol === 'blob:') expect(url.pathname).toMatch(new RegExp(`^${origin.replaceAll('.', '\\.')}\\/[\\da-f-]{36}$`));
+    else expect(url.pathname).toMatch(allowed);
+  }
   const storage = await page.evaluate(() => Object.keys(localStorage));
   expect(storage.filter((key) => key.startsWith('sb_license:'))).toEqual([]);
+});
+
+test('@claim:no-third-party-runtime requests only declared self-hosted app resources', async ({ page }) => {
+  const requests: Array<{ method: string; url: string }> = [];
+  page.on('request', (request) => requests.push({ method: request.method(), url: request.url() }));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const origin = 'http://127.0.0.1:4173';
+  const allowed = /^\/(?:$|assets\/|fonts\/|icons\/|manifest\.webmanifest$|sw\.js$|workbox-[^/]+\.js$)/;
+  for (const request of requests) {
+    expect(new URL(request.url).origin).toBe(origin);
+    expect(request.method).toBe('GET');
+    expect(new URL(request.url).pathname).toMatch(allowed);
+  }
 });
 
 test('@claim:five-page-free-limit prevents a sixth page from being recognized without an unlock', async ({ page }) => {
@@ -319,13 +369,26 @@ test('@claim:one-time-unlock verifies its $19 checkout and unlocks page six plus
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
-test('@regression: mobile brand and footer legal links have 44px touch targets', async ({ page }, testInfo) => {
+test('@regression: every visible mobile control has a 44px touch target', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'This measurement is specific to the 390px verifier viewport.');
-  await page.goto('/');
-  for (const locator of [page.locator('.brand'), page.locator('footer a[href="/privacy/"]'), page.locator('footer a[href="/terms/"]')]) {
+  await page.goto('/demo/');
+  const controls = page.locator('a:visible, button:visible, label.file-button:visible');
+  const count = await controls.count();
+  expect(count).toBeGreaterThan(10);
+  for (let index = 0; index < count; index++) {
+    const locator = controls.nth(index);
     const box = await locator.boundingBox();
     expect(box, 'touch target must have a layout box').not.toBeNull();
     expect(box!.width).toBeGreaterThanOrEqual(44);
     expect(box!.height).toBeGreaterThanOrEqual(44);
   }
+});
+
+test('@regression: the 390px landing page reflows at 200% text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-390', 'This measurement is specific to the 390px verifier viewport.');
+  await page.goto('/');
+  await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+  await page.locator('.pricing-section').scrollIntoViewIfNeeded();
+  const dimensions = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+  expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client);
 });
