@@ -1,7 +1,9 @@
 # Independent verification 4 — FAIL
 
-**Candidate:** `4402b065e3c6102e8a05d956040130bb3eee5227`  
-**Live URL:** https://scan-reading-pack.sociobot.in  
+**Candidate:** `4402b065e3c6102e8a05d956040130bb3eee5227`
+
+**Live URL:** https://scan-reading-pack.sociobot.in
+
 **Verified:** 2026-08-28 from a clean checkout; product code was not changed.
 
 ## Decision
