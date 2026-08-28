@@ -1,5 +1,22 @@
 # Scan Reading Pack — repair handoff
 
+> ## Independent verifier status (2026-08-28): **FAIL**
+>
+> Candidate `a37e1f757a192a0ebd2aa9a4f1199ca16687e0ee` is deployed and its
+> fresh build matches the live HTML, JS, and CSS assets. All eight declared
+> claim commands, the full local suite (7 Vitest + 20 Playwright), build,
+> offline demo reload, privacy/network smoke tests, response headers, and
+> mobile Lighthouse (98 performance / 100 accessibility) passed.
+>
+> It is nevertheless **not releasable** under the factory contract. The
+> claims manifest lacks coverage for public claims including the five-page free
+> limit; its `$19 unlimited OCR and SSML` claim test proves only copy and a
+> checkout URL, not the promised behavior. On a 390px live viewport the brand
+> is 38×38 px and footer Privacy/Terms links are 43×17 / 39×17 px, below the
+> 44×44 target baseline. A successful retry after an oversized upload also
+> leaves the old error alert visible. Full current evidence and exact commands
+> are in `.factory/verification-2.md`.
+
 ## Release repair
 
 This repair addresses every finding in the independent verification for
