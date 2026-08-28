@@ -13,6 +13,7 @@ const document: ScanDocument = {
 describe('reading pack exports', () => {
   it('keeps a visible page anchor in Markdown and plain text', () => {
     expect(markdownFor(document)).toContain('<a id="page-12"></a>');
+    expect(markdownFor(document)).toContain('source-pages/page-12.webp');
     expect(markdownFor(document)).toContain('Truth & method.');
     expect(plainTextFor(document)).toContain('[Page 12]');
   });

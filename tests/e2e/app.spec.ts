@@ -3,6 +3,8 @@ import AxeBuilder from '@axe-core/playwright';
 import path from 'node:path';
 
 test('landing page is accessible and responsive', async ({ page }, testInfo) => {
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await page.goto('/');
   await expect(page).toHaveTitle(/Scan Reading Pack/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
@@ -15,6 +17,7 @@ test('landing page is accessible and responsive', async ({ page }, testInfo) => 
   expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact || ''))).toEqual([]);
   const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
   expect(width.scroll).toBeLessThanOrEqual(width.client);
+  expect(consoleErrors).toEqual([]);
   await page.screenshot({ path: testInfo.outputPath('landing.png'), fullPage: true });
 });
 

@@ -8,7 +8,7 @@ export function safeName(value: string): string {
 function pageMarkdown(page: ScanPage): string {
   const text = page.blocks.map((block) => block.text).join('\n\n');
   const figures = page.figures.map((figure) => `![${figure.alt || figure.name}](figures/${figure.name})`).join('\n\n');
-  return `<a id="page-${page.number}"></a>\n\n## Page ${page.number}\n\n${text}${figures ? `\n\n${figures}` : ''}`;
+  return `<a id="page-${page.number}"></a>\n\n## Page ${page.number}\n\n[View source scan](source-pages/page-${page.number}.webp)\n\n${text}${figures ? `\n\n${figures}` : ''}`;
 }
 
 export function markdownFor(doc: ScanDocument): string {
@@ -40,8 +40,8 @@ export function sourceMapFor(doc: ScanDocument): string {
 
 function htmlFor(doc: ScanDocument): string {
   const escape = (text: string) => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
-  const pages = doc.pages.map((page) => `<section id="page-${page.number}"><p class="page">Original page ${page.number}</p>${page.blocks.map((block) => `<p data-source="page-${page.number}:${Math.round(block.box.x0)},${Math.round(block.box.y0)},${Math.round(block.box.x1)},${Math.round(block.box.y1)}">${escape(block.text)}</p>`).join('')}</section>`).join('');
-  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escape(doc.title)}</title><style>body{font:18px/1.65 Georgia,serif;max-width:44rem;margin:auto;padding:2rem;color:#171717;background:#faf7ef}.page{font:700 13px system-ui;color:#555;border-top:2px solid #111;padding-top:1rem;margin-top:4rem}p{white-space:pre-wrap}</style><main><h1>${escape(doc.title)}</h1>${pages}</main></html>`;
+  const pages = doc.pages.map((page) => `<section id="page-${page.number}"><p class="page"><a href="source-pages/page-${page.number}.webp">Original page ${page.number} ↗</a></p>${page.blocks.map((block) => `<p data-source="page-${page.number}:${Math.round(block.box.x0)},${Math.round(block.box.y0)},${Math.round(block.box.x1)},${Math.round(block.box.y1)}">${escape(block.text)}</p>`).join('')}</section>`).join('');
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escape(doc.title)}</title><style>body{font:18px/1.65 Georgia,serif;max-width:44rem;margin:auto;padding:2rem;color:#171717;background:#faf7ef}.page{font:700 13px system-ui;color:#555;border-top:2px solid #111;padding-top:1rem;margin-top:4rem}.page a{color:#145b65}p{white-space:pre-wrap}</style><main><h1>${escape(doc.title)}</h1>${pages}</main></html>`;
 }
 
 async function figureBytes(figure: Figure): Promise<Uint8Array> {
@@ -57,7 +57,10 @@ export async function downloadPack(doc: ScanDocument, includeSsml: boolean): Pro
     'source-map.json': strToU8(sourceMapFor(doc)),
   };
   if (includeSsml) files['audiobook.ssml'] = strToU8(ssmlFor(doc));
-  for (const page of doc.pages) for (const figure of page.figures) files[`figures/${figure.name}`] = await figureBytes(figure);
+  for (const page of doc.pages) {
+    files[`source-pages/page-${page.number}.webp`] = new Uint8Array(await page.image.arrayBuffer());
+    for (const figure of page.figures) files[`figures/${figure.name}`] = await figureBytes(figure);
+  }
   const zip = zipSync(files, { level: 6 });
   downloadBlob(new Blob([zip as BlobPart], { type: 'application/zip' }), `${safeName(doc.title)}-reading-pack.zip`);
 }

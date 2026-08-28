@@ -1,0 +1,30 @@
+{
+  "slug": "scan-reading-pack",
+  "title": "Scan Reading Pack",
+  "territory": "utilities",
+  "user": "Readers with scanned books or reports who need trustworthy selectable text and an audiobook-ready package while retaining page references to the original scan.",
+  "evidence": [
+    {
+      "url": "https://hn.algolia.com/api/v1/items/43048698",
+      "date": "2025-02-14",
+      "quote_or_summary": "A reader wants scanned philosophy PDFs converted to text for notes and audiobooks; classic OCR makes mistakes and their only good workaround is sending page snippets to ChatGPT."
+    },
+    {
+      "url": "https://github.com/Stirling-Tools/Stirling-PDF/issues/5582",
+      "date": "2026-01-28",
+      "quote_or_summary": "A PDF-to-Markdown request says image links without extracted image files make the conversion useless when images matter."
+    }
+  ],
+  "recurrence": "Extraction must preserve a usable relationship to the source, not merely emit a text blob.",
+  "current_workaround": "Run conventional OCR, copy pages into a chat model, or create text and images separately with no reliable page mapping.",
+  "incumbents_and_gap": "OCRmyPDF, Tesseract, Adobe Scan, and PDF-to-Markdown tools extract content, but a compact reader-oriented pack with page anchors, confidence queues, and local audio export is uncommon.",
+  "smallest_useful_product": "An offline desktop/PWA flow for image-only PDFs: OCR locally, produce Markdown/EPUB-like HTML with page anchors and extracted figures, queue low-confidence lines, and export SSML/plain text.",
+  "success_measure": "Users correct fewer than 10 lines per 100 pages before exporting a pack and can jump from any text block back to its source page.",
+  "artifact_class": "pwa-offline",
+  "monetization": "one-time",
+  "constraints": "Use local WASM/native OCR; warn users about copyright and private documents; keep original page coordinates; avoid claims of perfect transcription.",
+  "est_build_effort": "M",
+  "why_distinct": "The valuable output is a verifiable reading package with source-page traceability, not an opaque AI transcription wrapper.",
+  "confidence": 4,
+  "state": "RESEARCHED"
+}
