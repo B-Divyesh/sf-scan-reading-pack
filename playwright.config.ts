@@ -2,6 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // Keep the release gate at two workers, while resource-intensive OCR checks
+  // explicitly run once in the desktop project (see their project guards).
+  workers: 2,
   timeout: 120_000,
   expect: { timeout: 15_000 },
   use: {

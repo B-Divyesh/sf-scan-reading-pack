@@ -1,4 +1,5 @@
 import './style.css';
+import './repair.css';
 import { registerSW } from 'virtual:pwa-register';
 import type { Figure, LicenseState, ScanDocument, ScanPage, TextBlock } from './types';
 import { deleteDocument, discardDemoDocuments, listDocuments, saveDocument, setDemoMode } from './db';

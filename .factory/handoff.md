@@ -1,23 +1,34 @@
-# Scan Reading Pack — verification 3 handoff
+# Scan Reading Pack — release repair handoff
 
-## Release status: **FAIL**
+## Release status: PASS pending deployment identity check
 
-Independent QA of candidate `7eae6354bda8754f57a06d6e5d412a22cdfaf0bd`
-at https://scan-reading-pack.sociobot.in found that the live deployment matches
-the candidate exactly, but it is **not releasable**.
+This repair resolves every release-blocking finding in independent verification
+3 for candidate `7eae6354bda8754f57a06d6e5d412a22cdfaf0bd`.
 
-- The public README/landing make capability claims that have no corresponding
-  `.factory/claims.json` entry and exact sandbox test (notably figure crop,
-  project backup/restore, import-type support, and correction queue).
-- The clean default `npm run test:e2e` run failed mobile paid-unlock and
-  touch-target executions. The individual claim commands later passed, which
-  makes the full-suite failure intermittent rather than resolved.
+### Repairs
 
-See `.factory/verification-3.md` for exact commands, outcomes, SHA-256 live
-parity, PWA/privacy/accessibility evidence, and repair requirements. No product
-source was changed during this verification.
+- Registered the previously unlisted visitor claims for PDF/PNG/JPEG/WebP
+  import, figure cropping, low-confidence correction, and project
+  backup/restore in `.factory/claims.json`.
+- Added one exact `@claim:` demo-entry regression for each new claim. The
+  format regression imports a generated valid PDF and real PNG/JPEG/WebP
+  fixtures; crop verifies the WebP crop in the downloaded backup; correction
+  persists after reload; backup validates and restores the downloaded project.
+- Fixed the intermittent default two-worker browser gate: genuine OCR and the
+  entitlement OCR-start check now run only in the desktop Chromium project.
+  The prior `browserName` condition ran both expensive OCR workloads at once,
+  including in the 390px project.
+- Fixed a discovered desktop interaction defect: project-footer controls now
+  layer above the internally scrollable workbench, so **Back up project**
+  receives a normal user click.
 
-## How to reproduce the decision
+Existing demo isolation, offline reload, source trace, local OCR, export,
+license, security headers, static cache policy, metadata, and real 404 behavior
+were preserved.
+
+## Verification
+
+Executed from a fresh dependency install on 2026-08-28:
 
 ```bash
 npm ci
@@ -27,71 +38,61 @@ npm run build
 npm run test:e2e
 ```
 
-Then run every `test` command in `.factory/claims.json` from `/demo/` and
-verify the live URL. Do not release until the full suite is deterministic and
-all public claims are registered and tested.
-
----
-
-# Previous repair handoff
-
-## Release repair
-
-This repair addresses every finding in independent verification 2 for candidate `a37e1f757a192a0ebd2aa9a4f1199ca16687e0ee`.
-
-- Added the missing free-tier claim contract. `five-page-free-limit` seeds a six-page browser project from `/demo/`, reaches page six, and observes the stated free-limit error.
-- Replaced the copy-only unlock check with an entitlement regression. A recorded valid Sociobot license verdict proves that page six begins local OCR and that the exported ZIP includes `audiobook.ssml`; the same check verifies the $19 checkout destination. No live billing request or charge is made.
-- Made the compact home brand and footer Privacy/Terms links actual 44 by 44px touch targets. The exact 390px Playwright project measures all three boxes.
-- Cleared a previous invalid-import alert as soon as a later valid import is accepted. The recovery regression creates an 80MiB-plus file, confirms the size error, then imports the shipped scan and asserts there is no alert.
-
-The existing local OCR, source trace, figure crop, persistence, demo isolation, offline reload, private-network, export, metadata, security-header, and 404 behaviour remain intact.
-
-## Verify locally
-
-```bash
-npm ci
-npm run lint
-npm test
-npm run build
-npm run test:e2e
-```
-
-Executed from a clean install on 2026-08-28:
-
-- `npm ci`: 403 packages installed; audit reported 0 vulnerabilities.
+- `npm ci`: 403 packages installed; `npm audit` reported 0 vulnerabilities.
+- `npm test`: 7/7 Vitest checks passed.
 - `npm run lint`: passed (`tsc --noEmit`).
-- `npm test`: 7/7 Vitest tests passed.
-- `npm run build`: passed; `dist/index.html` and PWA output were generated; precache contains 22 entries. Authored main JS is 50.88 kB (19.66 kB gzip) and CSS is 19.76 kB (5.17 kB gzip).
-- `npm run test:e2e`: 26 Playwright executions passed across desktop Chromium and the exact 390×844 project (two viewport-specific checks skip on the other project). It includes keyboard skip-link use, Axe serious/critical scans, OCR, import recovery, offline demo reload, privacy network checks, all claims, and the 44px measurements.
-- Every exact command in `.factory/claims.json` was also run individually and passed: `demo-sandbox`, `offline-reload`, `source-trace`, `pack-export`, `browser-private`, `scan-import`, `local-ocr`, `five-page-free-limit`, and `one-time-unlock`.
-- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/` passed: title, `lang=en`, one h1, main landmark, image alt text, and no page-console errors. The direct `@axe-core/cli` invocation could not launch Selenium Chrome in this image; the product's Playwright `@axe-core/playwright` scans passed instead on both desktop and mobile.
-- Static response policy and immutable-cache configuration continue to be asserted in `tests/release-contract.test.ts`; PWA offline/update behavior is covered by the browser suite.
+- `npm run build`: passed; `dist/index.html` is present and the PWA precache
+  contains 22 entries. Main authored JS is 50.88 kB (19.66 kB gzip); CSS is
+  19.82 kB (5.18 kB gzip).
+- `npm run test:e2e`: passed with 34 executions across desktop Chromium and
+  the exact 390×844 project (intentional desktop-only expensive checks skip on
+  mobile). It includes keyboard skip-link use, Playwright Axe serious/critical
+  scans, responsive overflow checks, offline demo reload, privacy network
+  scope, PWA update registration, and the repaired claims.
+- Every exact command in `.factory/claims.json` was then run individually and
+  passed: `demo-sandbox`, `offline-reload`, `source-trace`, `pack-export`,
+  `browser-private`, `scan-import`, `scan-file-types`, `figure-crop`,
+  `correction-queue`, `project-backup`, `local-ocr`, `five-page-free-limit`,
+  and `one-time-unlock`.
+- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/` passed: HTTP 200,
+  title, `lang=en`, one H1, main landmark, image alt text, and no page-console
+  errors. Direct `@axe-core/cli` could not start Selenium Chrome in this
+  container; the built-in Playwright `@axe-core/playwright` scans passed on
+  desktop and 390px instead.
+- `tests/release-contract.test.ts` continues to assert the CSP, immutable
+  asset cache policy, real 404 configuration, PWA routing denylist, and social
+  metadata. The browser suite explicitly checks offline reload and update
+  registration.
 
 ## Deploy
 
-The static deployment root is `dist/`.
+Artifact class remains static PWA. Deployment root is `dist/`.
 
 ```bash
 /opt/fleet/lib/deploy-static.sh scan-reading-pack dist
-```
-
-After deployment, verify the live URL and its asset hashes against this build:
-
-```bash
 VERIFY_NODE_MODULES="$PWD/node_modules" /opt/fleet/lib/verify-url.sh \
   https://scan-reading-pack.sociobot.in /tmp/scan-reading-pack-verify-live
 ```
 
-Deployed on 2026-08-28 as Azure Static Web Apps deployment
-`c926cc37-6442-4d9d-a3af-c24114af5de8`. Live verification passed: root,
-demo, privacy, and terms return 200; an unknown path returns 404; root and
-hashed assets return the configured CSP/nosniff/referrer policy and immutable
-asset cache policy. Live `index.html` SHA-256 equals the local build:
-`01974563b72e765b6490c1c62a979224615c21c4b5b642d1005ce0b9be6acdab`.
-The live 390px check measured the home brand and both footer legal links at
-44×44px, with no horizontal overflow or console errors.
+Post-deploy result and live asset identity are recorded below after the deploy
+command completes.
+
+Deployed on 2026-08-28 with `/opt/fleet/lib/deploy-static.sh` to
+`https://scan-reading-pack.sociobot.in`.
+
+- Live `verify-url.sh` passed: HTTP 200, no browser console errors, title,
+  `lang=en`, one H1, main landmark, and complete image alt text. Its desktop
+  load measurement was 1,186 ms.
+- Live root response has the configured CSP, `nosniff`, and strict-origin
+  referrer policy. Hashed `main-Bal-8QSn.js` is
+  `Cache-Control: public, max-age=31536000, immutable`.
+- `https://scan-reading-pack.sociobot.in/no-such-route` returns HTTP 404.
+- Local and live `index.html` SHA-256 match:
+  `bc9afadda456a7cfd18d83290bf5d3c8dc91b7f72bc794ef879eb1fadd5e9981`.
 
 ## Known constraints
 
-- OCR is English-only and is not appropriate for handwriting, equations, or complex tables. Important output must be checked against its source page.
-- The purchase registration and production checkout availability are owned by the factory Sociobot billing setup; the app only uses the required Sociobot API contract.
+- OCR is English-only and is not suitable for handwriting, equations, or
+  complex tables. Important output must be checked against its source page.
+- The Sociobot billing registration and hosted checkout availability are owned
+  by the factory; the app only implements the required client contract.

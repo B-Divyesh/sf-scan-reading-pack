@@ -4,6 +4,28 @@ import { unzipSync, strFromU8 } from 'fflate';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path, { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import sharp from 'sharp';
+
+function onePagePdf(): Buffer {
+  const stream = '0.15 0.4 0.55 rg 20 20 120 80 re f\n';
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 160 120] /Contents 4 0 R /Resources << >> >>',
+    `<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}endstream`,
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  for (const [index, object] of objects.entries()) {
+    offsets.push(Buffer.byteLength(pdf));
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  }
+  const xref = Buffer.byteLength(pdf);
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  pdf += offsets.slice(1).map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`).join('');
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(pdf);
+}
 
 async function seedSixPageProject(page: Page, title: string): Promise<void> {
   await page.evaluate(async ({ projectTitle }) => {
@@ -81,6 +103,34 @@ test('@claim:scan-import imports a scan into the demo workspace and persists it'
   await expect(page.getByRole('heading', { level: 1, name: 'sample-scan' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Page 1', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /Recognize this page/ })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1, name: 'sample-scan' })).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact || ''))).toEqual([]);
+});
+
+test('@claim:scan-file-types imports each stated scan format', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'The format matrix runs once; both viewports cover the shared import flow.');
+  const png = readFileSync(path.resolve('tests/fixtures/sample-scan.png'));
+  const formats = [
+    { name: 'format-check.png', mimeType: 'image/png', buffer: png },
+    { name: 'format-check.jpg', mimeType: 'image/jpeg', buffer: await sharp(png).jpeg().toBuffer() },
+    { name: 'format-check.webp', mimeType: 'image/webp', buffer: await sharp(png).webp().toBuffer() },
+    { name: 'format-check.pdf', mimeType: 'application/pdf', buffer: onePagePdf() },
+  ];
+  for (const format of formats) {
+    await page.goto('/demo/');
+    await page.getByRole('button', { name: '← Library' }).click();
+    await page.locator('#file-input').setInputFiles(format);
+    await expect(page.getByRole('heading', { level: 1, name: format.name.replace(/\.[^.]+$/, '') })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { level: 2, name: 'Page 1', exact: true })).toBeVisible();
+  }
+});
+
+test('@claim:figure-crop saves an extracted figure in the project backup', async ({ page }) => {
+  await page.goto('/demo/');
+  await page.getByRole('button', { name: '← Library' }).click();
+  await page.locator('#file-input').setInputFiles(path.resolve('tests/fixtures/sample-scan.png'));
   await page.getByRole('button', { name: 'Extract a figure' }).click();
   await page.locator('#scan-stage').scrollIntoViewIfNeeded();
   const stage = await page.locator('#scan-stage').boundingBox();
@@ -90,10 +140,44 @@ test('@claim:scan-import imports a scan into the demo workspace and persists it'
   await page.mouse.move(stage.x + stage.width * .72, stage.y + stage.height * .72);
   await page.mouse.up();
   await expect(page.getByText('1 figure saved from this page')).toBeVisible();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Back up project' }).click();
+  const download = await downloadPromise;
+  const file = await download.path();
+  if (!file) throw new Error('Backup download path is missing');
+  const backup = JSON.parse(readFileSync(file, 'utf8'));
+  expect(backup.documents[0].pages[0].figures).toHaveLength(1);
+  expect(backup.documents[0].pages[0].figures[0].blob).toMatch(/^data:image\/webp;base64,/);
+});
+
+test('@claim:correction-queue saves a checked low-confidence correction', async ({ page }) => {
+  await page.goto('/demo/');
+  await page.getByRole('button', { name: /Needs review/ }).click();
+  await expect(page.getByRole('heading', { name: 'Confidence queue' })).toBeVisible();
+  const line = page.getByRole('textbox', { name: 'Recognized text, page 1 line 1' });
+  await line.fill('Each page kept a route back to its source.');
+  await line.blur();
+  await expect(page.getByText('Queue clear')).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'sample-scan' })).toBeVisible();
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact || ''))).toEqual([]);
+  await expect.poll(() => page.locator('textarea').nth(2).inputValue()).toBe('Each page kept a route back to its source.');
+});
+
+test('@claim:project-backup downloads and restores the sample project', async ({ page }) => {
+  await page.goto('/demo/');
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Back up project' }).click();
+  const download = await downloadPromise;
+  const file = await download.path();
+  if (!file) throw new Error('Backup download path is missing');
+  const backup = JSON.parse(readFileSync(file, 'utf8'));
+  expect(backup.format).toBe('scan-reading-pack/project-v1');
+  expect(backup.documents[0].pages[0].image).toMatch(/^data:image\/svg\+xml;base64,/);
+  expect(backup.documents[0].pages[0].blocks).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'demo-line-2' })]));
+  await page.getByRole('button', { name: '← Library' }).click();
+  await page.locator('#restore-input').setInputFiles(file);
+  await expect(page.locator('#live-status')).toContainText('1 project restored.');
+  await page.getByRole('button', { name: /Night Reading Room/ }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /Night Reading Room/ })).toBeVisible();
 });
 
 test('@regression: a successful import clears an earlier invalid-import alert', async ({ page }, testInfo) => {
@@ -114,8 +198,8 @@ test('@regression: a successful import clears an earlier invalid-import alert', 
   }
 });
 
-test('@claim:local-ocr recognizes an imported scan in the browser', async ({ page, browserName }) => {
-  test.skip(browserName !== 'chromium', 'The real OCR smoke test runs once.');
+test('@claim:local-ocr recognizes an imported scan in the browser', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'The real OCR smoke test runs once on the desktop project.');
   await page.goto('/demo/');
   await page.getByRole('button', { name: 'Start for real' }).first().click();
   await expect(page).toHaveURL('/');
@@ -211,7 +295,8 @@ test('@claim:five-page-free-limit prevents a sixth page from being recognized wi
   await expect(page.getByRole('alert')).toContainText('recognizes up to 5 pages per project');
 });
 
-test('@claim:one-time-unlock verifies its $19 checkout and unlocks page six plus SSML export', async ({ page }) => {
+test('@claim:one-time-unlock verifies its $19 checkout and unlocks page six plus SSML export', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'The entitlement path runs once on the desktop project to avoid concurrent OCR workers.');
   await page.goto('/demo/');
   await page.getByRole('button', { name: 'Start for real' }).first().click();
   await expect(page).toHaveURL('/');

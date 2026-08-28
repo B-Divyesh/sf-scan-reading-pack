@@ -8,7 +8,11 @@ const read = (file: string) => readFileSync(resolve(root, file), 'utf8');
 describe('release contract regressions', () => {
   it('ships the verifier-required claim and demo documents', () => {
     const claims = JSON.parse(read('.factory/claims.json')) as Array<{ id: string; test: string }>;
-    expect(claims.map((claim) => claim.id)).toEqual(expect.arrayContaining(['demo-sandbox', 'offline-reload', 'source-trace', 'pack-export', 'browser-private']));
+    expect(claims.map((claim) => claim.id)).toEqual(expect.arrayContaining([
+      'demo-sandbox', 'offline-reload', 'source-trace', 'pack-export', 'browser-private',
+      'scan-import', 'scan-file-types', 'figure-crop', 'correction-queue', 'project-backup',
+      'local-ocr', 'five-page-free-limit', 'one-time-unlock',
+    ]));
     for (const claim of claims) expect(read('tests/e2e/app.spec.ts')).toContain(`@claim:${claim.id}`);
     expect(read('.factory/demo.md')).toContain('demo:scan-reading-pack');
   });

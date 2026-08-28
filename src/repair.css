@@ -1,0 +1,6 @@
+/* Keep project ownership controls above the internally scrollable workbench. */
+.project-foot {
+  position: relative;
+  z-index: 1;
+  background: var(--ink);
+}
