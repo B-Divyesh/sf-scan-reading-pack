@@ -1,4 +1,39 @@
-# Scan Reading Pack — repair handoff
+# Scan Reading Pack — verification 3 handoff
+
+## Release status: **FAIL**
+
+Independent QA of candidate `7eae6354bda8754f57a06d6e5d412a22cdfaf0bd`
+at https://scan-reading-pack.sociobot.in found that the live deployment matches
+the candidate exactly, but it is **not releasable**.
+
+- The public README/landing make capability claims that have no corresponding
+  `.factory/claims.json` entry and exact sandbox test (notably figure crop,
+  project backup/restore, import-type support, and correction queue).
+- The clean default `npm run test:e2e` run failed mobile paid-unlock and
+  touch-target executions. The individual claim commands later passed, which
+  makes the full-suite failure intermittent rather than resolved.
+
+See `.factory/verification-3.md` for exact commands, outcomes, SHA-256 live
+parity, PWA/privacy/accessibility evidence, and repair requirements. No product
+source was changed during this verification.
+
+## How to reproduce the decision
+
+```bash
+npm ci
+npm test
+npm run lint
+npm run build
+npm run test:e2e
+```
+
+Then run every `test` command in `.factory/claims.json` from `/demo/` and
+verify the live URL. Do not release until the full suite is deterministic and
+all public claims are registered and tested.
+
+---
+
+# Previous repair handoff
 
 ## Release repair
 
