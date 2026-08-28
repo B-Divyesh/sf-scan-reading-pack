@@ -297,6 +297,9 @@ async function importFiles(event: Event): Promise<void> {
   if (files.some((file) => file.size > 80 * 1024 * 1024)) { error = 'Each source file must be 80 MB or smaller for reliable browser storage.'; render(); return; }
   const pdfs = files.filter((file) => file.type === 'application/pdf');
   if (pdfs.length && files.length > 1) { error = 'Import one PDF at a time, or choose a set of image pages.'; render(); return; }
+  // A valid new import is an explicit recovery from any earlier import error.
+  // Keeping a stale alert would misrepresent the current workbench state.
+  error = '';
   working = true;
   notice = 'Preparing source pages locally…';
   render();
@@ -308,6 +311,7 @@ async function importFiles(event: Event): Promise<void> {
     await saveDocument(active);
     documents = await listDocuments();
     selectedPage = 0;
+    error = '';
     notice = `${pages.length} source page${pages.length === 1 ? '' : 's'} ready.`;
   } catch (reason) {
     console.error(reason);
