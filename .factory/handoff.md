@@ -1,6 +1,6 @@
 # Scan Reading Pack — repair 6 handoff
 
-## Release status: READY TO DEPLOY
+## Release status: DEPLOYED
 
 This repair addresses every blocker in independent verification 6 for
 candidate `99b85bcc7f0fca2a58fa9f282fcaa87609e802ae`. It preserves the Vite +
@@ -79,8 +79,37 @@ browser suite serves `dist/` with the production response policy.
 
 ## Deployment evidence
 
-Deployment and post-deploy identity checks will be recorded here after the
-repair commit is uploaded.
+- Product repair commit `ba261605b5840789e6c37a8b9db13a52e03955f1` was
+  pushed to `origin/main`.
+- Azure Static Web Apps deployment `d5a59818-f86d-4490-a86f-cae4dfa6d934`
+  succeeded against the existing `sf-scan-reading-pack` app in Central US.
+  The default host is `agreeable-plant-0f34b3d10.7.azurestaticapps.net`; the
+  production URL is `https://scan-reading-pack.sociobot.in`.
+- Local and live SHA-256 hashes match exactly: `index.html`
+  `ce17c207c8e9a447aa1c9277f69e70638b1361c37295ab2f9fb90e0086e7bdbe`,
+  `sw.js` `48cc45db44873704c9af67db395244e2cf67fa391aa286ed7371fa431eb48682`,
+  manifest `4d973d3087c913d1b81a93c91a7a7ed6577cc3ab1e7604765905858fcef0097d`,
+  main JS `427a9cc76dcffc61fd0b6268821ec03e26ab3d95f0c45d855d679cdd84aff143`,
+  and main CSS
+  `e0db26c32d5a9d1a9447333817d62dcd07b7bf0f499c0a7f8b47a942f2981080`.
+- Live `verify-url.sh` passed: HTTP 200, 1,231ms load, correct title and
+  language, one H1/main, complete alt/control names, and zero console errors.
+- Live 1280 × 720 first-read geometry exactly matches the repaired local
+  bounds and ends at y=632. At 1440 × 900, all five trace controls owned their
+  pointer hit, accepted a real click, held keyboard focus, and showed a solid
+  3px outline.
+- Live Axe found zero serious/critical issues across `/`, `/demo/`,
+  `/privacy/`, `/terms/`, and the 404 route. At 390 × 844, all first-read
+  content fits, the smallest of 26 visible demo controls is 44 × 44px, and
+  Axe again found zero serious/critical issues.
+- The live service worker controls the page, reloads the shell offline, and
+  completes `registration.update()`. The production root returns HTTP 200,
+  unknown routes return 404, and CSP, HSTS, nosniff, frame, referrer, and
+  permissions policies are present.
+- Live Lighthouse mobile: Performance 100, Accessibility 100, Best Practices
+  100, SEO 100; FCP 1.2s, LCP 1.5s, TBT 0ms, CLS 0, transfer 140 KiB.
+- Post-deploy evidence is in `.factory/qa-artifacts/repair-6/live-verify/`,
+  `live-audit.json`, and `lighthouse-live.json`.
 
 ## Known gaps
 

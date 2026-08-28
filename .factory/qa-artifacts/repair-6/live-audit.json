@@ -1,0 +1,111 @@
+{
+  "desktop": {
+    "firstRead": {
+      "h1": {
+        "top": 164,
+        "bottom": 334.0625
+      },
+      ".lede": {
+        "top": 348.0625,
+        "bottom": 417.875
+      },
+      ".hero-actions": {
+        "top": 431.875,
+        "bottom": 487.875
+      },
+      ".hero-facts": {
+        "top": 561.875,
+        "bottom": 631.875
+      }
+    },
+    "traceControls": [
+      {
+        "line": "P1 · L1",
+        "pointerHit": true,
+        "focused": true,
+        "outlineWidth": "3px",
+        "outlineStyle": "solid"
+      },
+      {
+        "line": "P1 · L2",
+        "pointerHit": true,
+        "focused": true,
+        "outlineWidth": "3px",
+        "outlineStyle": "solid"
+      },
+      {
+        "line": "P1 · L3",
+        "pointerHit": true,
+        "focused": true,
+        "outlineWidth": "3px",
+        "outlineStyle": "solid"
+      },
+      {
+        "line": "P1 · L4",
+        "pointerHit": true,
+        "focused": true,
+        "outlineWidth": "3px",
+        "outlineStyle": "solid"
+      },
+      {
+        "line": "P1 · L5",
+        "pointerHit": true,
+        "focused": true,
+        "outlineWidth": "3px",
+        "outlineStyle": "solid"
+      }
+    ],
+    "axeSeriousCritical": {
+      "/": [],
+      "/demo/": [],
+      "/privacy/": [],
+      "/terms/": [],
+      "/not-a-real-page": []
+    },
+    "normalRouteConsoleErrors": [],
+    "expected404NavigationErrors": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ]
+  },
+  "mobile": {
+    "firstRead": {
+      "h1": {
+        "top": 163,
+        "bottom": 284.125
+      },
+      ".lede": {
+        "top": 308.125,
+        "bottom": 391.515625
+      },
+      ".hero-actions": {
+        "top": 423.515625,
+        "bottom": 503.515625
+      },
+      ".hero-facts": {
+        "top": 617.515625,
+        "bottom": 687.515625
+      }
+    },
+    "controlCount": 26,
+    "minimumTarget": {
+      "width": 44,
+      "height": 44
+    },
+    "axeSeriousCritical": []
+  },
+  "pwa": {
+    "controlled": true,
+    "updateCheckCompleted": true,
+    "offlineShellReloaded": true
+  },
+  "responsePolicy": {
+    "rootStatus": 200,
+    "missingStatus": 404,
+    "csp": "default-src 'self'; base-uri 'self'; connect-src 'self' https://api.sociobot.in; font-src 'self'; img-src 'self' blob: data:; manifest-src 'self'; object-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; worker-src 'self' blob:",
+    "hsts": "max-age=10886400; includeSubDomains; preload",
+    "contentTypeOptions": "nosniff",
+    "frameOptions": "DENY",
+    "referrerPolicy": "strict-origin-when-cross-origin",
+    "permissionsPolicy": "camera=(), geolocation=(), microphone=(), payment=()"
+  }
+}
