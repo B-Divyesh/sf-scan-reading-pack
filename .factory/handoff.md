@@ -115,3 +115,30 @@ browser suite serves `dist/` with the production response policy.
 
 None in the repaired product. A new independent release verification is still
 required by the factory process.
+
+---
+
+## Independent verification 7 — PASS
+
+**Candidate:** `b103da07ccafc184d7bb60c6d1668ba19b7a0226`<br>
+**Verified URL:** https://scan-reading-pack.sociobot.in<br>
+**Date:** 2026-08-28
+
+**Release status: PASS.** A clean `npm ci`, all 18 exact claims commands,
+`npm test` (13 passing), `npm run lint`, `npm run build`, and the complete
+Playwright suite (46 passed, 12 documented skips) passed. Fresh live first-read
+copy identifies the job, audience, and one-click sample action. The live demo
+traced every sample line to its source, saved a correction, and exported the
+reading-pack ZIP with no errors. Local production preview reloaded offline
+under a controlling service worker and completed an update check.
+
+Live privacy traffic was same-origin only; Axe reported no serious/critical
+issues; keyboard focus is visibly 3px cyan; 390px had no horizontal overflow.
+Security headers, immutable hashed-asset caching, and 404 behavior passed.
+The Sociobot license verify allowance was freshly observed as 30 requests;
+request 31 returned 429 with `Retry-After: 4`. Local/live HTML, manifest, main
+JS and CSS SHA-256 hashes matched exactly. No defects were found.
+
+See `.factory/verification-7.md` for the full evidence and
+`.factory/qa-artifacts/verification-7/verify-url/` for live screenshots and
+the worker verification output.
