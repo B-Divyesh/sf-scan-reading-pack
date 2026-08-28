@@ -107,6 +107,18 @@ test('@regression: brand visible name is included in its accessible name', async
   expect(results.violations.filter((item) => item.id === 'label-content-name-mismatch')).toEqual([]);
 });
 
+test('@regression: workbench visible labels are included in accessible names', async ({ page }) => {
+  await page.goto('/demo/');
+  for (let index = 1; index <= 5; index += 1) {
+    await expect(page.getByRole('button', { name: new RegExp(`P1 · L${index}.*show on source page`, 'i') })).toBeVisible();
+  }
+  const results = await new AxeBuilder({ page })
+    .withTags(['experimental'])
+    .withRules(['label-content-name-mismatch'])
+    .analyze();
+  expect(results.violations.filter((item) => item.id === 'label-content-name-mismatch')).toEqual([]);
+});
+
 test('@claim:scan-import imports a scan into the demo workspace and persists it', async ({ page }) => {
   await page.goto('/demo/');
   await page.getByRole('button', { name: '← Library' }).click();
@@ -173,8 +185,25 @@ test('@claim:correction-queue saves a checked low-confidence correction', async 
   await expect.poll(() => page.locator('textarea').nth(2).inputValue()).toBe('Each page kept a route back to its source.');
 });
 
-test('@claim:project-backup downloads and restores the sample project', async ({ page }) => {
+test('@claim:confidence-preservation keeps the original score after a correction', async ({ page }) => {
   await page.goto('/demo/');
+  const line = page.getByRole('textbox', { name: 'Recognized text, page 1 line 3' });
+  await expect(line.locator('xpath=..').getByText('Check · 78%')).toBeVisible();
+  await line.fill('Each corrected page keeps a route back to its source.');
+  await line.blur();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Back up project' }).click();
+  const backupPath = await (await downloadPromise).path();
+  if (!backupPath) throw new Error('Backup download path is missing');
+  const block = JSON.parse(readFileSync(backupPath, 'utf8')).documents[0].pages[0].blocks.find((item: { id: string }) => item.id === 'demo-line-3');
+  expect(block).toMatchObject({ text: 'Each corrected page keeps a route back to its source.', originalText: 'Each page kept a route back to the paper from which it came.', confidence: 78 });
+});
+
+test('@claim:project-backup downloads and restores after an invalid retry under production CSP', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  const response = await page.goto('/demo/');
+  expect(response?.headers()['content-security-policy']).toContain("connect-src 'self' https://api.sociobot.in");
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Back up project' }).click();
   const download = await downloadPromise;
@@ -184,11 +213,48 @@ test('@claim:project-backup downloads and restores the sample project', async ({
   expect(backup.format).toBe('scan-reading-pack/project-v1');
   expect(backup.documents[0].pages[0].image).toMatch(/^data:image\/svg\+xml;base64,/);
   expect(backup.documents[0].pages[0].blocks).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'demo-line-2' })]));
-  await page.getByRole('button', { name: '← Library' }).click();
+  await page.getByRole('button', { name: 'Start for real' }).first().click();
+  await expect(page).toHaveURL('/');
+  await page.locator('#restore-input').setInputFiles({ name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{}') });
+  await expect(page.getByRole('alert')).toContainText('not a valid Scan Reading Pack backup');
   await page.locator('#restore-input').setInputFiles(file);
   await expect(page.locator('#live-status')).toContainText('1 project restored.');
+  await expect(page.getByRole('alert')).toHaveCount(0);
   await page.getByRole('button', { name: /Night Reading Room/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: /Night Reading Room/ })).toBeVisible();
+  expect(consoleErrors).toEqual([]);
+});
+
+test('@claim:local-deletion removes a project and a saved license from this device', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#file-input').setInputFiles(path.resolve('tests/fixtures/sample-scan.png'));
+  await expect(page.getByRole('heading', { level: 1, name: 'sample-scan' })).toBeVisible();
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Delete project' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Continue a reading pack' })).toBeVisible();
+  await expect.poll(() => page.evaluate(async () => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('scan-reading-pack', 1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const count = await new Promise<number>((resolve, reject) => {
+      const request = database.transaction('documents').objectStore('documents').count();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    database.close();
+    return count;
+  })).toBe(0);
+
+  await page.evaluate(() => {
+    localStorage.setItem('sb_license:scan-reading-pack', 'recorded-valid-license');
+    localStorage.setItem('sb_license_verdict:scan-reading-pack', JSON.stringify({ token: 'recorded-valid-license', valid: true, checkedAt: Date.now() }));
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Remove license from this device' }).click();
+  await expect(page.getByRole('link', { name: /Buy the \$19 lifetime unlock/ })).toBeVisible();
+  expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith('sb_license')))).toEqual([]);
 });
 
 test('@regression: invalid imports recover without a console error', async ({ page }, testInfo) => {
@@ -276,9 +342,21 @@ test('@claim:offline-reload recognizes a later import offline after language fil
 test('@claim:source-trace lights the matching source region for every sample line', async ({ page }) => {
   await page.goto('/demo/');
   for (let index = 1; index <= 5; index++) {
-    await page.getByRole('button', { name: `Show line ${index} on source page` }).click();
+    await page.getByRole('button', { name: new RegExp(`P1 · L${index}.*show on source page`, 'i') }).click();
     await expect(page.locator('.source-highlight')).toBeVisible();
     await expect(page.locator('.text-block.selected')).toContainText(`L${index}`);
+  }
+});
+
+test('@regression: secondary pages link How it works to the home section', async ({ page }) => {
+  for (const route of ['/privacy/', '/terms/', '/not-a-real-page']) {
+    const response = await page.goto(route);
+    if (route === '/not-a-real-page') expect(response?.status()).toBe(404);
+    const link = page.locator('.site-header nav a', { hasText: 'How it works' });
+    await expect(link).toHaveAttribute('href', '/#how');
+    await page.goto('/#how');
+    await expect(page).toHaveURL(/\/#how$/);
+    await expect(page.locator('#how')).toBeVisible();
   }
 });
 
@@ -387,7 +465,13 @@ test('@regression: every visible mobile control has a 44px touch target', async 
 test('@regression: the 390px landing page reflows at 200% text size', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-390', 'This measurement is specific to the 390px verifier viewport.');
   await page.goto('/');
-  await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+  await page.evaluate(() => {
+    const rootRule = [...document.styleSheets]
+      .flatMap((sheet) => [...sheet.cssRules])
+      .find((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule && rule.selectorText === ':root');
+    if (!rootRule) throw new Error('Root type rule is missing');
+    rootRule.style.setProperty('font-size', '200%', 'important');
+  });
   await page.locator('.pricing-section').scrollIntoViewIfNeeded();
   const dimensions = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
   expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client);

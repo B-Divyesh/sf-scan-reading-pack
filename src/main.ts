@@ -7,6 +7,7 @@ import { createSampleDocument } from './demo';
 import { acceptReturnedLicense, checkoutUrl, getLicenseState, removeLicense, restoreLicense } from './license';
 import { recognizePage } from './ocr';
 import { downloadBlob, downloadPack, safeName } from './exporter';
+import { backupImageFromDataUrl } from './data-url';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 let documents: ScanDocument[] = [];
@@ -41,10 +42,11 @@ function escapeHtml(value: string): string {
 }
 
 function header(back = false): string {
+  const howHref = location.pathname === '/' || location.pathname === '/index.html' ? '#how' : '/#how';
   return `<header class="site-header">
     <a class="brand" href="/"><span class="brand-mark">SR</span><span>Scan Reading Pack</span></a>
     <nav aria-label="Primary">
-      ${back ? '<button class="text-button" id="back-home">← Library</button>' : '<a href="#how">How it works</a>'}
+      ${back ? '<button class="text-button" id="back-home">← Library</button>' : `<a href="${howHref}">How it works</a>`}
       <a href="/demo/">Demo</a>
       <a href="/privacy/">Privacy</a>
       <span class="local-badge"><i></i>${navigator.onLine ? 'Local-first' : 'Offline'}</span>
@@ -53,7 +55,7 @@ function header(back = false): string {
 }
 
 function footer(): string {
-  return `<footer><div><strong>Scan Reading Pack</strong><p>Trace text back to the source page before you rely on it.</p></div><div class="footer-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><span>Built by Param Factory · build 1.0.1</span><span>Original generated illustration · © 2026 Sociobot</span></div></footer>`;
+  return `<footer><div><strong>Scan Reading Pack</strong><p>Trace text back to the source page before you rely on it.</p></div><div class="footer-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><span>Built by Param Factory · build 1.0.2</span><span>Original generated illustration · © 2026 Sociobot</span></div></footer>`;
 }
 
 function statusRegions(): string {
@@ -197,7 +199,7 @@ function workbench(): void {
 function blockEditor(block: TextBlock, index: number, pageNumber: number): string {
   const isLow = block.confidence < 82;
   return `<article class="text-block ${block.id === selectedBlock ? 'selected' : ''} ${isLow && !block.reviewed ? 'uncertain' : ''}" data-block="${block.id}">
-    <div class="block-meta"><button class="trace-button" data-trace="${block.id}" aria-label="Show line ${index + 1} on source page">P${pageNumber} · L${index + 1}</button><span class="confidence ${isLow ? 'low' : ''}">${isLow ? 'Check' : 'Clear'} · ${block.confidence}%</span></div>
+    <div class="block-meta"><button class="trace-button" data-trace="${block.id}" aria-label="P${pageNumber} · L${index + 1} — show on source page">P${pageNumber} · L${index + 1}</button><span class="confidence ${isLow ? 'low' : ''}">${isLow ? 'Check' : 'Clear'} · ${block.confidence}%</span></div>
     <label class="sr-only" for="block-${block.id}">Recognized text, page ${pageNumber} line ${index + 1}</label>
     <textarea id="block-${block.id}" data-edit="${block.id}" rows="${Math.max(2, Math.ceil(block.text.length / 62))}">${escapeHtml(block.text)}</textarea>
     <div class="block-actions"><button class="text-button" data-trace="${block.id}">${icon('trace')} Show on scan</button>${isLow && !block.reviewed ? `<button class="text-button check-button" data-check="${block.id}">${icon('check')} Mark checked</button>` : '<span class="checked-label">✓ Checked</span>'}</div>
@@ -442,11 +444,9 @@ async function restoreBackup(event: Event): Promise<void> {
   try {
     const data = JSON.parse(await file.text()) as { format: string; documents: Array<Omit<ScanDocument, 'pages'> & { pages: Array<Omit<ScanPage, 'image' | 'figures'> & { image: string; figures: Array<Omit<Figure, 'blob'> & { blob: string }> }> }> };
     if (data.format !== 'scan-reading-pack/project-v1' || !Array.isArray(data.documents)) throw new Error('Invalid backup');
-    for (const doc of data.documents) {
-      const restored = { ...doc, pages: await Promise.all(doc.pages.map(async (page) => ({ ...page, image: await (await fetch(page.image)).blob(), figures: await Promise.all(page.figures.map(async (figure) => ({ ...figure, blob: await (await fetch(figure.blob)).blob() }))) }))) } as ScanDocument;
-      await saveDocument(restored);
-    }
-    documents = await listDocuments(); notice = `${data.documents.length} project${data.documents.length === 1 ? '' : 's'} restored.`; render();
+    const restoredDocuments = data.documents.map((doc) => ({ ...doc, pages: doc.pages.map((page) => ({ ...page, image: backupImageFromDataUrl(page.image), figures: page.figures.map((figure) => ({ ...figure, blob: backupImageFromDataUrl(figure.blob) })) })) })) as ScanDocument[];
+    for (const restored of restoredDocuments) await saveDocument(restored);
+    documents = await listDocuments(); error = ''; notice = `${data.documents.length} project${data.documents.length === 1 ? '' : 's'} restored.`; render();
   } catch { error = 'That file is not a valid Scan Reading Pack backup.'; render(); }
 }
 

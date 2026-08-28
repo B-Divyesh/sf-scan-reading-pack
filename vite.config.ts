@@ -24,7 +24,7 @@ export default defineConfig({
         short_name: 'Reading Pack',
         description: 'Turn scanned pages into traceable, audiobook-ready reading packs on your device.',
         id: '/?source=pwa',
-        start_url: '/?v=1',
+        start_url: '/?v=2',
         scope: '/',
         display: 'standalone',
         background_color: '#090b12',

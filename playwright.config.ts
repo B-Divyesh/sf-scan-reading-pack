@@ -17,7 +17,7 @@ export default defineConfig({
     { name: 'mobile-390', use: { ...devices['Pixel 5'], viewport: { width: 390, height: 844 } } },
   ],
   webServer: {
-    command: 'npm run preview -- --port 4173',
+    command: 'npm run preview:test',
     url: 'http://127.0.0.1:4173',
     // The release suite must own its preview server. Reusing a process that is
     // being torn down by another browser command can turn a clean run into

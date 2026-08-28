@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "lint": "tsc --noEmit",
     "preview": "vite preview --host 0.0.0.0",
+    "preview:test": "node scripts/serve-dist.mjs",
     "test": "vitest run",
     "test:e2e": "npm run build && playwright test"
   },

@@ -11,7 +11,7 @@ describe('release contract regressions', () => {
     expect(claims.map((claim) => claim.id)).toEqual(expect.arrayContaining([
       'demo-sandbox', 'offline-reload', 'source-trace', 'pack-export', 'browser-private', 'no-third-party-runtime',
       'scan-import', 'scan-file-types', 'figure-crop', 'correction-queue', 'project-backup',
-      'local-ocr', 'five-page-free-limit', 'one-time-unlock',
+      'confidence-preservation', 'local-deletion', 'local-ocr', 'five-page-free-limit', 'one-time-unlock',
     ]));
     const browserTests = read('tests/e2e/app.spec.ts');
     for (const claim of claims) {
