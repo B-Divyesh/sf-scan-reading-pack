@@ -47,6 +47,15 @@ VERIFY_NODE_MODULES="$PWD/node_modules" /opt/fleet/lib/verify-url.sh \
   https://scan-reading-pack.sociobot.in /tmp/scan-reading-pack-verify-live
 ```
 
+Deployed on 2026-08-28 as Azure Static Web Apps deployment
+`c926cc37-6442-4d9d-a3af-c24114af5de8`. Live verification passed: root,
+demo, privacy, and terms return 200; an unknown path returns 404; root and
+hashed assets return the configured CSP/nosniff/referrer policy and immutable
+asset cache policy. Live `index.html` SHA-256 equals the local build:
+`01974563b72e765b6490c1c62a979224615c21c4b5b642d1005ce0b9be6acdab`.
+The live 390px check measured the home brand and both footer legal links at
+44×44px, with no horizontal overflow or console errors.
+
 ## Known constraints
 
 - OCR is English-only and is not appropriate for handwriting, equations, or complex tables. Important output must be checked against its source page.
