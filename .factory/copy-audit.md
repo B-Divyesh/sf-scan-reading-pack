@@ -8,6 +8,7 @@
 | Fact | Sample data uses its own workspace. | 6 | Pass |
 | Fact | Pages stay in this browser. | 6 | Pass |
 | Fact | Cached OCR works offline. | 4 | Pass |
+| Revoked license notice | This license is no longer active because billing reported it as revoked. | 11 | Pass |
 
 No audited first-screen sentence exceeds 22 words or uses a banned marketing
 term.

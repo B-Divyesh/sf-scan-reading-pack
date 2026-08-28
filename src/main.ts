@@ -55,7 +55,7 @@ function header(back = false): string {
 }
 
 function footer(): string {
-  return `<footer><div><strong>Scan Reading Pack</strong><p>Trace text back to the source page before you rely on it.</p></div><div class="footer-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><span>Built by Param Factory · build 1.0.2</span><span>Original generated illustration · © 2026 Sociobot</span></div></footer>`;
+  return `<footer><div><strong>Scan Reading Pack</strong><p>Trace text back to the source page before you rely on it.</p></div><div class="footer-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><span>Built by Param Factory · build 1.0.3</span><span>Original generated illustration · © 2026 Sociobot</span></div></footer>`;
 }
 
 function statusRegions(): string {
@@ -126,7 +126,7 @@ function pricingSection(): string {
   return `<section class="pricing-section" aria-labelledby="unlock-title">
     <div><p class="eyebrow"><span>04</span> Desktop-quality unlock</p><h2 id="unlock-title">Free for a chapter. One-time for the shelf.</h2><p>Every project can be corrected, backed up, and exported. A one-time <strong>$19 USD</strong> license adds unlimited-page OCR and audiobook SSML export on your devices.</p></div>
     <div class="license-panel">
-      ${license.valid ? `<p class="license-active">${icon('check')} Full pack unlocked</p><p>Your cached license is active. It is quietly rechecked at most once a day.</p><button class="text-button" id="remove-license">Remove license from this device</button>` : `<a class="primary-button" href="${checkoutUrl}">${icon('arrow')} Buy the $19 lifetime unlock</a><p class="merchant-copy">One-time purchase. Sociobot/Dodo is merchant of record; refunds are handled there.</p><form id="license-form"><label for="license-token">Already bought it? Paste your license</label><div><input id="license-token" autocomplete="off" required placeholder="License token"><button class="secondary-button" type="submit">Verify</button></div></form>`}
+      ${license.valid ? `<p class="license-active">${icon('check')} Full pack unlocked</p><p>Your cached license is active. It is quietly rechecked at most once a day.</p><button class="text-button" id="remove-license">Remove license from this device</button>` : `${license.token && license.reason === 'revoked' ? '<p class="license-revoked" role="status">This license is no longer active because billing reported it as revoked.</p>' : ''}<a class="primary-button" href="${checkoutUrl}">${icon('arrow')} Buy the $19 lifetime unlock</a><p class="merchant-copy">One-time purchase. Sociobot/Dodo is merchant of record; refunds are handled there.</p><form id="license-form"><label for="license-token">Already bought it? Paste your license</label><div><input id="license-token" autocomplete="off" required placeholder="License token"><button class="secondary-button" type="submit">Verify</button></div></form>`}
       <p class="legal-mini"><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a></p>
     </div>
   </section>`;

@@ -96,6 +96,20 @@ test('landing page is accessible and responsive', async ({ page }, testInfo) => 
   await page.screenshot({ path: testInfo.outputPath('landing.png'), fullPage: true });
 });
 
+test('@regression: complete desktop first-read content fits at 1280 by 720', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'This is the verifier desktop baseline geometry check.');
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/');
+  for (const selector of ['h1', '.lede', '.hero-actions', '.hero-facts']) {
+    const box = await page.locator(selector).boundingBox();
+    expect(box, `${selector} must have a layout box`).not.toBeNull();
+    expect(box!.y, `${selector} must start inside the viewport`).toBeGreaterThanOrEqual(0);
+    expect(box!.y + box!.height, `${selector} must end inside the viewport`).toBeLessThanOrEqual(720);
+  }
+  await expect(page.locator('.hero-actions > span')).toBeVisible();
+  await expect(page.locator('.hero-facts > li')).toHaveCount(3);
+});
+
 test('@regression: brand visible name is included in its accessible name', async ({ page }) => {
   await page.goto('/');
   // The wordmark contracts to its visible SR monogram on a narrow screen.
@@ -348,6 +362,45 @@ test('@claim:source-trace lights the matching source region for every sample lin
   }
 });
 
+test('@regression: every desktop trace control is pointer reachable with a visible focus ring', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'This is the verifier 1440 by 900 overlap check.');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/demo/');
+  const scroller = page.locator('.blocks');
+  for (let index = 1; index <= 5; index += 1) {
+    const trace = page.getByRole('button', { name: new RegExp(`P1 · L${index}.*show on source page`, 'i') });
+    await trace.scrollIntoViewIfNeeded();
+    const geometry = await trace.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      const styles = getComputedStyle(element);
+      return {
+        hit: top === element || element.contains(top),
+        outlineStyle: styles.outlineStyle,
+        outlineWidth: parseFloat(styles.outlineWidth),
+        top: rect.top,
+        bottom: rect.bottom,
+      };
+    });
+    const scrollerBox = await scroller.boundingBox();
+    expect(scrollerBox).not.toBeNull();
+    expect(geometry.top).toBeGreaterThanOrEqual(scrollerBox!.y);
+    expect(geometry.bottom).toBeLessThanOrEqual(scrollerBox!.y + scrollerBox!.height);
+    expect(geometry.hit, `line ${index} must own its pointer hit target`).toBe(true);
+    await trace.focus();
+    await expect(trace).toBeFocused();
+    const focus = await trace.evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return { style: styles.outlineStyle, width: parseFloat(styles.outlineWidth), color: styles.outlineColor };
+    });
+    expect(focus.style).not.toBe('none');
+    expect(focus.width).toBeGreaterThanOrEqual(3);
+    expect(focus.color).not.toBe('transparent');
+    await trace.click();
+    await expect(page.locator('.text-block.selected')).toContainText(`L${index}`);
+  }
+});
+
 test('@regression: secondary pages link How it works to the home section', async ({ page }) => {
   for (const route of ['/privacy/', '/terms/', '/not-a-real-page']) {
     const response = await page.goto(route);
@@ -357,6 +410,20 @@ test('@regression: secondary pages link How it works to the home section', async
     await page.goto('/#how');
     await expect(page).toHaveURL(/\/#how$/);
     await expect(page.locator('#how')).toBeVisible();
+  }
+});
+
+test('@regression: every public route has no serious or critical accessibility findings', async ({ page }) => {
+  for (const route of ['/', '/demo/', '/privacy/', '/terms/', '/not-a-real-page']) {
+    const response = await page.goto(route);
+    if (route === '/not-a-real-page') expect(response?.status()).toBe(404);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+    await expect(page.locator('main')).toHaveCount(1);
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(
+      results.violations.filter((item) => ['serious', 'critical'].includes(item.impact || '')),
+      `${route} must have no serious or critical Axe findings`,
+    ).toEqual([]);
   }
 });
 
@@ -445,6 +512,67 @@ test('@claim:one-time-unlock verifies its $19 checkout and unlocks page six plus
   await page.getByRole('button', { name: /Recognize this page/ }).click();
   await expect(page.getByText('Reading page 6 locally…')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('@claim:daily-license-check rechecks an active license only after 24 hours', async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'The exact entitlement timing boundary runs once.');
+  const context = await browser.newContext({ baseURL: 'http://127.0.0.1:4173', serviceWorkers: 'block' });
+  const page = await context.newPage();
+  let verifyRequests = 0;
+  await page.route('https://api.sociobot.in/api/v1/products/scan-reading-pack/verify?license=daily-license', async (route) => {
+    verifyRequests += 1;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ valid: true, reason: 'ok' }) });
+  });
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem('sb_license:scan-reading-pack', 'daily-license');
+    localStorage.setItem('sb_license_verdict:scan-reading-pack', JSON.stringify({ token: 'daily-license', valid: true, checkedAt: Date.now() - 86_400_000 + 1_000 }));
+  });
+  await page.reload();
+  await expect(page.getByText('Full pack unlocked')).toBeVisible();
+  expect(verifyRequests).toBe(0);
+  await page.evaluate(() => {
+    const key = 'sb_license_verdict:scan-reading-pack';
+    const cached = JSON.parse(localStorage.getItem(key)!);
+    cached.checkedAt = Date.now() - 86_400_000 - 1_000;
+    localStorage.setItem(key, JSON.stringify(cached));
+  });
+  await page.reload();
+  await expect(page.getByText('Full pack unlocked')).toBeVisible();
+  expect(verifyRequests).toBe(1);
+  await page.reload();
+  expect(verifyRequests).toBe(1);
+  await context.close();
+});
+
+test('@claim:refund-revocation removes paid access after a revoked verdict', async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'The recorded billing revocation path runs once.');
+  const context = await browser.newContext({ baseURL: 'http://127.0.0.1:4173', serviceWorkers: 'block', acceptDownloads: true });
+  const page = await context.newPage();
+  await page.route('https://api.sociobot.in/api/v1/products/scan-reading-pack/verify?license=refunded-license', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ valid: false, reason: 'revoked' }) });
+  });
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem('sb_license:scan-reading-pack', 'refunded-license');
+    localStorage.setItem('sb_license_verdict:scan-reading-pack', JSON.stringify({ token: 'refunded-license', valid: true, checkedAt: Date.now() - 86_400_001 }));
+  });
+  await page.reload();
+  await expect(page.getByText('This license is no longer active because billing reported it as revoked.')).toBeVisible();
+  await expect(page.getByText('Full pack unlocked')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /Buy the \$19 lifetime unlock/ })).toBeVisible();
+  const cached = await page.evaluate(() => JSON.parse(localStorage.getItem('sb_license_verdict:scan-reading-pack')!));
+  expect(cached).toMatchObject({ token: 'refunded-license', valid: false, reason: 'revoked' });
+  await seedSixPageProject(page, 'Six-page revoked');
+  await openSixthPage(page, 'Six-page revoked');
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export reading pack' }).click();
+  const archivePath = await (await downloadPromise).path();
+  if (!archivePath) throw new Error('Revoked-license export path is missing');
+  expect(Object.keys(unzipSync(readFileSync(archivePath)))).not.toContain('audiobook.ssml');
+  await page.getByRole('button', { name: /Recognize this page/ }).click();
+  await expect(page.getByRole('alert')).toContainText('recognizes up to 5 pages per project');
+  await context.close();
 });
 
 test('@regression: every visible mobile control has a 44px touch target', async ({ page }, testInfo) => {

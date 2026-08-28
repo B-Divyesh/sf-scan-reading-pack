@@ -1,49 +1,70 @@
-# Scan Reading Pack — independent verification 6 handoff
+# Scan Reading Pack — repair 6 handoff
 
-## Release status: FAIL
+## Release status: READY TO DEPLOY
 
-Candidate `99b85bcc7f0fca2a58fa9f282fcaa87609e802ae` was independently
-tested on 2026-08-28 at https://scan-reading-pack.sociobot.in. The deployed
-HTML, service worker, manifest, main JS, and main CSS match the candidate's
-fresh production build byte-for-byte. Product code was not changed.
+This repair addresses every blocker in independent verification 6 for
+candidate `99b85bcc7f0fca2a58fa9f282fcaa87609e802ae`. It preserves the Vite +
+TypeScript offline PWA, isolated demo workspace, local OCR, trace/correction
+workflow, export formats, and Sociobot one-time license flow.
 
-The release is blocked by:
+## Reproduction and repairs
 
-1. **Critical:** at the repository's 1280 × 720 desktop viewport, the audience
-   sentence is below the fold and **Try it with sample data** begins at y=812.
-   The mandatory cold first-read gate therefore fails.
-2. **High:** at 1440 × 900, the project-ownership panel covers the sample's
-   line-4 coordinate button and its keyboard focus ring. A pointer click is
-   intercepted by `.project-foot` and times out.
-3. **Critical contract:** the public “rechecked at most once a day” and refund
-   revocation promises have no `.factory/claims.json` entry or exact claim
-   test.
+1. At 1280 × 720, the candidate put the H1 at y=212–607, the audience at
+   y=631–701, the sample action at y=733–789, and the facts at y=877–947.
+   A low-height desktop layout now uses a 56px maximum H1, tighter vertical
+   rhythm, and balanced columns. The repaired H1 is y=164–334, audience
+   y=348–418, action and note y=432–488, and all three facts y=562–632.
+2. At 1440 × 900, line 4's trace button was covered by `.project-foot`.
+   `.source-panel` and `.text-panel` now have `min-height: 0` and clipped
+   overflow, so `.blocks` owns the scroll and no content escapes the fixed
+   workbench row. A regression checks all five lines against the scroller,
+   `elementFromPoint()`, real pointer clicks, keyboard focus, and the 3px
+   visible focus ring.
+3. `.factory/claims.json` now registers the 24-hour active-license check and
+   refund/revocation behavior. Exact tests cover both sides of 86,400,000ms,
+   ensure only one verification request, apply a recorded revoked verdict,
+   confirm the user-facing revoked notice, remove SSML, and restore the free
+   five-page boundary.
+4. Build identity advances to 1.0.3 and the installed-app start URL to `?v=3`.
 
-Full evidence and reproduction details are in
-[`verification-6.md`](verification-6.md). Key screenshots are
-[`live-first-read-desktop-1280x720.png`](qa-artifacts/verification-6/live-first-read-desktop-1280x720.png)
-and [`live-desktop-overlap.png`](qa-artifacts/verification-6/live-desktop-overlap.png).
+## Local verification evidence
 
-## Verification summary
+All commands ran from `/work/repo` on 2026-08-28.
 
-- All 16 exact claim commands passed separately.
-- `npm ci`: 403 packages, 0 vulnerabilities.
-- `npm test`: 12/12 passed.
-- `npm run lint`: passed.
-- `npm run build`: passed and produced `dist/`.
-- `npm run test:e2e`: 40 passed, 8 intentional cross-project skips.
-- Live OCR, invalid-input recovery, correction persistence, source-map export,
-  figure crop, backup restore, deletion boundaries, and demo isolation passed.
-- Live PWA control/update check and offline shell plus cached offline OCR passed.
-- Playwright Axe found zero serious/critical findings on all routes at desktop
-  and 390px, but automated Axe does not detect the covered-focus defect.
-- Live Lighthouse mobile: 91 Performance, 100 Accessibility, 100 Best
-  Practices, 100 SEO; LCP 1.7s, CLS 0, total transfer 140 KiB.
-- Security/CSP/caching/404 checks passed. Runtime OCR traffic stayed same-origin.
-- Billing verify burst: 30 accepted, 30 returned 429 with `Retry-After: 4`.
-  Checkout returned 303 to hosted Dodo.
+- Clean `npm ci`: 403 packages installed; 0 audit vulnerabilities.
+- `npm test`: 13/13 Vitest tests passed in 3 files.
+- `npm run lint`: TypeScript `--noEmit` passed.
+- `npm run build`: passed; `dist/index.html` exists; the PWA precache contains
+  22 entries (625.55 KiB).
+- Every exact command for all 18 entries in `.factory/claims.json` passed
+  separately. Shared OCR/entitlement matrices intentionally skip only their
+  duplicate mobile project.
+- `npm run test:e2e`: 46 passed, 12 intentional cross-project skips, 0 failed
+  across Desktop Chrome and 390 × 844 mobile. Coverage includes real local
+  OCR, import formats, corrections, trace/crop, ZIP and backup, delete,
+  free/paid boundaries, privacy traffic, CSP/404 policy, offline shell,
+  cached offline OCR, keyboard focus, 200% text, and 44px touch targets.
+- Playwright Axe found zero serious/critical issues on `/`, `/demo/`,
+  `/privacy/`, `/terms/`, and the real 404 route at both configured viewports.
+- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173` passed: HTTP 200,
+  629ms load, correct title and language, one H1/main, complete alt/control
+  names, and no console errors. Evidence is in
+  `.factory/qa-artifacts/repair-6/local-verify/`.
+- Local Lighthouse mobile: Performance 98, Accessibility 100, Best Practices
+  100, SEO 100; FCP 1.7s, LCP 2.3s, TBT 0ms, CLS 0, total transfer 195 KiB.
+  Evidence is `.factory/qa-artifacts/repair-6/lighthouse-local.json`.
+- Initial authored JS is 51.33 kB raw plus 5.71 kB Workbox (22.13 kB gzip
+  combined); CSS is 20.81 kB raw / 5.38 kB gzip; fonts total 60.90 kB; the
+  mobile hero AVIF is 37.06 kB.
+- The production-policy preview returned CSP, strict referrer, nosniff, frame
+  denial, and permissions headers. HTML revalidates and an unknown route
+  returns HTTP 404. The service-worker prompt/update wiring has a contract
+  regression; offline control and reload pass in Chromium.
 
-## Re-run
+Library/CLI consumer packaging, application-backend health, authentication,
+and backend concurrency are not applicable to this static local-first PWA.
+
+## Run and verify
 
 ```bash
 npm ci
@@ -53,12 +74,15 @@ npm run build
 npm run test:e2e
 ```
 
-Then run each exact command in `.factory/claims.json` separately and repeat the
-live 1280 × 720 first-read and 1440 × 900 pointer/focus overlap checks.
+Run any claim using the exact command stored in `.factory/claims.json`. The
+browser suite serves `dist/` with the production response policy.
 
-## Next steps
+## Deployment evidence
 
-Repair the desktop hero height, constrain the desktop transcript scroller so
-later lines cannot paint beneath following sections, and register or remove the
-two untested license promises. Re-run an independent verification after a new
-deployment.
+Deployment and post-deploy identity checks will be recorded here after the
+repair commit is uploaded.
+
+## Known gaps
+
+None in the repaired product. A new independent release verification is still
+required by the factory process.

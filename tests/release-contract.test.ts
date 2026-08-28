@@ -12,6 +12,7 @@ describe('release contract regressions', () => {
       'demo-sandbox', 'offline-reload', 'source-trace', 'pack-export', 'browser-private', 'no-third-party-runtime',
       'scan-import', 'scan-file-types', 'figure-crop', 'correction-queue', 'project-backup',
       'confidence-preservation', 'local-deletion', 'local-ocr', 'five-page-free-limit', 'one-time-unlock',
+      'daily-license-check', 'refund-revocation',
     ]));
     const browserTests = read('tests/e2e/app.spec.ts');
     for (const claim of claims) {
@@ -30,6 +31,14 @@ describe('release contract regressions', () => {
     expect(read('404.html')).toContain('src/main.ts');
     expect(read('public/staticwebapp.config.json')).toBe(read('staticwebapp.config.json'));
     expect(read('vite.config.ts')).toContain('navigateFallbackDenylist');
+  });
+
+  it('keeps the prompt-based service-worker update path wired', () => {
+    expect(read('vite.config.ts')).toContain("registerType: 'prompt'");
+    expect(read('vite.config.ts')).toContain('skipWaiting: false');
+    expect(read('vite.config.ts')).toContain('clientsClaim: true');
+    expect(read('src/main.ts')).toContain('onNeedRefresh()');
+    expect(read('src/main.ts')).toContain('updateSW(true)');
   });
 
   it('ships canonical social metadata with a 1200 by 630 product image', () => {
