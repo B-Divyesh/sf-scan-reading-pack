@@ -11,6 +11,8 @@ export default defineConfig({
         main: resolve(import.meta.dirname, 'index.html'),
         privacy: resolve(import.meta.dirname, 'privacy/index.html'),
         terms: resolve(import.meta.dirname, 'terms/index.html'),
+        demo: resolve(import.meta.dirname, 'demo/index.html'),
+        notFound: resolve(import.meta.dirname, '404.html'),
       },
     },
   },
@@ -39,6 +41,9 @@ export default defineConfig({
         clientsClaim: true,
         skipWaiting: false,
         navigateFallback: '/index.html',
+        // Only known application routes receive the offline shell. Unknown
+        // paths must reach Static Web Apps so its real HTTP 404 is preserved.
+        navigateFallbackDenylist: [/^\/(?!$|index\.html$|demo\/?$|privacy\/?$|terms\/?$)/],
         globPatterns: ['**/*.{html,js,css,svg,png,webp,avif,woff2}'],
         globIgnores: ['ocr/**', 'tessdata/**'],
         maximumFileSizeToCacheInBytes: 3_000_000,

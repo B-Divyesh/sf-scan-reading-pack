@@ -1,12 +1,24 @@
 import type { ScanDocument } from './types';
 
-const DB_NAME = 'scan-reading-pack';
+const REAL_DB_NAME = 'scan-reading-pack';
+const DEMO_DB_NAME = 'demo:scan-reading-pack';
 const DB_VERSION = 1;
 const STORE = 'documents';
 
+let demoMode = false;
+
+/** Demo projects deliberately live in a different IndexedDB database. */
+export function setDemoMode(enabled: boolean): void {
+  demoMode = enabled;
+}
+
+export function databaseName(): string {
+  return demoMode ? DEMO_DB_NAME : REAL_DB_NAME;
+}
+
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = indexedDB.open(databaseName(), DB_VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
@@ -59,4 +71,14 @@ export async function clearDocuments(): Promise<void> {
     tx.onerror = () => reject(tx.error);
   });
   db.close();
+}
+
+export async function discardDemoDocuments(): Promise<void> {
+  if (!demoMode) return;
+  await new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(DEMO_DB_NAME);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error('Close other demo tabs before resetting the demo.'));
+  });
 }

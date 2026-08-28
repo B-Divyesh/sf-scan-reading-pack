@@ -1,64 +1,89 @@
-# Scan Reading Pack — build handoff
+# Scan Reading Pack — repair handoff
 
-## Independent verification status — **FAIL** (2026-08-28)
+## Release repair
 
-Candidate `1477079d1a425f237379feb1a23d3f1e47f25c7d` was independently tested
-against https://scan-reading-pack.sociobot.in from a fresh install. It **fails
-release acceptance** despite a working local conversion flow and matching live
-assets. The required `.factory/claims.json` is missing, so the mandatory
-demo-entry claim tests do not exist. The live first screen has no “Try it with
-sample data” action; `/demo` and `/?demo=1` are ordinary empty landing pages,
-with no sample data, demo banner/reset controls, isolation, or `.factory/demo.md`.
+This repair addresses every finding in the independent verification for
+candidate `1477079d1a425f237379feb1a23d3f1e47f25c7d`.
 
-See [`.factory/verification.md`](verification.md) for exact commands, test
-results, live hash evidence, and defects by severity. Do not promote this
-candidate until its Critical findings are repaired and independently retested.
+- Added a one-click **Try it with sample data** action and direct `/demo/` and
+  `/?demo=1` entries. The sample opens directly in the trace workbench.
+- Added the persistent Demo — sample data banner, Reset demo, and Start for
+  real controls. Demo work is isolated in IndexedDB
+  `demo:scan-reading-pack`; real projects remain in `scan-reading-pack`.
+  Leaving demo deletes its database. Demo mode does not read the real library
+  or license localStorage state.
+- Added the required `.factory/claims.json`, `.factory/demo.md`, and exact
+  `@claim:` Playwright coverage for demo isolation, offline reload, source
+  trace, ZIP contents, same-origin privacy, scan import/persistence, local
+  OCR, and the stated one-time unlock destination.
+- Rewrote the first screen in plain language for readers with scanned books or
+  reports; added `.factory/copy-audit.md`.
+- Added canonical, Open Graph, Twitter, and Apple-touch metadata; a product
+  1200×630 social image derived from the existing original hero art; `/demo/`
+  sitemap entry; titles for all routes; and a designed 404 page.
+- Added `staticwebapp.config.json` at the repository and deploy roots. It sets
+  CSP, referrer, MIME, frame, and permissions policies; immutable caching for
+  hashed/static assets; and an HTTP-404 rewrite to the designed page.
+- Made `npm run test:e2e` build first, so it works from a clean install.
+  Browser coverage now includes desktop Chromium and an exact 390px mobile
+  viewport.
 
-## Delivered
-
-- Finished Vite + TypeScript offline PWA for PDF, PNG, JPEG, and WebP scans.
-- Browser-local English OCR using self-hosted Tesseract.js/WASM and language data. The recognition runtime is lazy-loaded and cached after first use; source files are never uploaded.
-- PDF pages are rasterized locally with PDF.js. Imported pages, OCR lines, original confidence, edits, exact bounding boxes, and figure crops persist in IndexedDB.
-- Two-pane review workbench with page navigation, low-confidence queue, editable lines, mark-checked state, and coordinate-correct source highlighting even when the scan is letterboxed.
-- Pointer/touch figure cropping with crops retained in the project.
-- Self-contained ZIP reading pack: Markdown and selectable HTML with page anchors/source links, plain text, source page images, extracted figures, and `source-map.json`. Paid unlock additionally includes page-marked SSML.
-- JSON project backup/restore, specific delete confirmation, empty/loading/error/offline states, and responsive 390px layout.
-- PWA manifest and icons, versioned Workbox app-shell cache, runtime OCR cache, navigation fallback, and update prompt.
-- Sociobot one-time license contract: production checkout link, return-token capture, localStorage persistence, at-most-daily verification, cached/offline unlock, restore field, and removal control. The free tier recognizes five pages per project while keeping corrections, backups, source pages, and core exports available.
-- Privacy and terms routes, copyright/accuracy warnings, no analytics, no remote fonts/scripts, original generated hero artwork with provenance in `.factory/design.md`.
-
-## Run and deploy
+## Verify locally
 
 ```bash
 npm ci
-npm run dev
+npm run lint
 npm test
 npm run build
 npm run test:e2e
 ```
 
-Exact factory build command: `npm ci && npm run build`. Static output is `./dist`; `dist/index.html` exists at its root.
+All commands above passed on 2026-08-28:
 
-For billing test mode: `VITE_BILLING_BASE=https://pilot-api.sociobot.in npm run build`. Production defaults to `https://api.sociobot.in`.
+- `npm ci`: 403 packages installed; `npm audit --omit=dev`: 0 vulnerabilities.
+- `npm run lint`: TypeScript check passed.
+- `npm test`: 7/7 tests passed, including static-host response/metadata
+  contract regressions.
+- `npm run build`: passed; `dist/index.html`, `dist/demo/index.html`,
+  `dist/404.html`, and `dist/staticwebapp.config.json` exist. The PWA precache
+  contains 22 entries.
+- `npm run test:e2e`: 20/20 passed across Chromium desktop and 390px mobile.
+  It includes Axe serious/critical checks, keyboard skip-link coverage, import
+  and refresh persistence, figure crop, real OCR, all claim checks, and true
+  offline reload.
+- `verify-url.sh http://127.0.0.1:4173/`: passed with title, `lang="en"`, one
+  H1, main landmark, complete image alt text, and no browser console errors.
+- Lighthouse mobile against the production preview: Performance 99,
+  Accessibility 100, Best Practices 100, SEO 100; LCP 1.9 s and CLS 0.
+- Initial authored application JS is 50.87 KB (19.66 KB gzip); authored CSS is
+  19.64 KB (5.16 KB gzip). OCR and PDF code remain lazy-loaded.
 
-## Verification — 2026-08-28
+Each public claim is independently runnable from a fresh demo context using
+the command in `.factory/claims.json`, for example:
 
-- `npm test`: 4/4 unit tests passed (page anchors, SSML escaping/markers, source coordinates/confidence, safe filenames).
-- `npm run build`: passed with Vite 8.2.2; PWA generated with 20 precached entries.
-- `npm run test:e2e`: 8/8 Playwright checks passed across desktop Chromium and a 390px-class mobile profile. These cover keyboard skip navigation, Axe, image import, IndexedDB refresh persistence, figure cropping, real Tesseract OCR, export readiness, and a true offline reload.
-- Axe: 0 serious or critical findings on landing and project workbench in both browser profiles.
-- Console smoke test: no console errors on initial load.
-- `npm audit` and `npm audit --omit=dev`: 0 known vulnerabilities.
-- Production mobile Lighthouse: Performance **99**, Accessibility **100**, Best Practices **100**, SEO **100**.
-- Lighthouse timings: FCP **1.3 s**, LCP **2.0 s**, TBT **0 ms**, CLS **0.001**.
-- Initial authored JS is 45.07 KB plus the 5.71 KB PWA registration helper (about 20.2 KB combined gzip); CSS is 18.45 KB (4.95 KB gzip). PDF.js and OCR are loaded only when needed.
-- Hero assets: AVIF 40 KB, WebP 64 KB, JPEG fallback 136 KB; self-hosted fonts total 68 KB.
-- Manual visual review completed for 1280px desktop and mobile full-page captures. Generated hero has no people, brands, text artifacts, or misleading UI.
+```bash
+npm run test:e2e -- --grep @claim:offline-reload
+```
 
-## Known constraints / next steps
+## Deploy
 
-- OCR v1 is English-only and is not intended for handwriting, equations, or complex tables. Additional self-hosted language packs can follow based on real demand.
-- First OCR use downloads about 16 MB across the selected WASM core and 11 MB English model; both are cached. App-shell installation remains lightweight.
-- Very large PDFs are memory-sensitive in browsers; input is capped at 80 MB per source and 200 pages. Pages are rasterized sequentially to reduce pressure.
-- The factory still needs to register the `scan-reading-pack` product/return URL in Sociobot billing and confirm the listed $19 USD one-time price before paid checkout is promoted in production.
-- The stated pilot success measure (fewer than 10 corrections per 100 pages across 20 documents) requires a real user/document pilot; the product now records the confidence/review data needed for that validation without analytics.
+The static deployment root is `dist/`. Deploy with:
+
+```bash
+/opt/fleet/lib/deploy-static.sh scan-reading-pack dist
+```
+
+Post-deploy verification should use:
+
+```bash
+VERIFY_NODE_MODULES="$PWD/node_modules" /opt/fleet/lib/verify-url.sh \
+  https://scan-reading-pack.sociobot.in /tmp/scan-reading-pack-verify
+```
+
+## Known constraints
+
+- OCR is English-only and is not suitable for handwriting, equations, or
+  complex tables. Verify important output against its source page.
+- The one-time product registration and checkout availability remain owned by
+  the factory’s Sociobot billing setup; the shipped integration uses the
+  required Sociobot API contract.

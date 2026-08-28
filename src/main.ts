@@ -1,7 +1,8 @@
 import './style.css';
 import { registerSW } from 'virtual:pwa-register';
 import type { Figure, LicenseState, ScanDocument, ScanPage, TextBlock } from './types';
-import { deleteDocument, listDocuments, saveDocument } from './db';
+import { deleteDocument, discardDemoDocuments, listDocuments, saveDocument, setDemoMode } from './db';
+import { createSampleDocument } from './demo';
 import { acceptReturnedLicense, checkoutUrl, getLicenseState, removeLicense, restoreLicense } from './license';
 import { recognizePage } from './ocr';
 import { downloadBlob, downloadPack, safeName } from './exporter';
@@ -18,6 +19,7 @@ let cropStart: { x: number; y: number } | null = null;
 let license: LicenseState = { token: null, valid: false, checkedAt: 0 };
 let notice = '';
 let error = '';
+let demoMode = false;
 const imageUrls = new Map<string, string>();
 
 const icon = (name: 'scan' | 'trace' | 'check' | 'audio' | 'arrow' | 'download' | 'lock') => {
@@ -42,6 +44,7 @@ function header(back = false): string {
     <a class="brand" href="/" aria-label="Scan Reading Pack home"><span class="brand-mark">SR</span><span>Scan Reading Pack</span></a>
     <nav aria-label="Primary">
       ${back ? '<button class="text-button" id="back-home">← Library</button>' : '<a href="#how">How it works</a>'}
+      <a href="/demo/">Demo</a>
       <a href="/privacy/">Privacy</a>
       <span class="local-badge"><i></i>${navigator.onLine ? 'Local-first' : 'Offline'}</span>
     </nav>
@@ -49,11 +52,12 @@ function header(back = false): string {
 }
 
 function footer(): string {
-  return `<footer><div><strong>Scan Reading Pack</strong><p>Your pages stay on your device. OCR is fallible—verify important passages against the source.</p></div><div class="footer-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><span>Original AI-generated illustration · © 2026 Sociobot</span></div></footer>`;
+  return `<footer><div><strong>Scan Reading Pack</strong><p>Trace text back to the source page before you rely on it.</p></div><div class="footer-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><span>Built by Param Factory · build 1.0.1</span><span>Original generated illustration · © 2026 Sociobot</span></div></footer>`;
 }
 
 function statusRegions(): string {
-  return `${!navigator.onLine ? '<div class="offline-banner" role="status">You’re offline. Saved projects and cached OCR remain available.</div>' : ''}
+  return `${demoMode ? `<aside class="demo-banner" aria-label="Demo controls"><strong>Demo — sample data, nothing is saved to your library.</strong><span>This sample uses its own browser-only workspace.</span><button class="text-button" id="reset-demo">Reset demo</button><button class="demo-real-button" id="start-real">Start for real</button></aside>` : ''}
+    ${!navigator.onLine ? '<div class="offline-banner" role="status">You’re offline. Saved projects and cached OCR remain available.</div>' : ''}
     ${working && !active ? '<div class="working-banner" role="status"><span></span> Preparing your source pages locally…</div>' : ''}
     <div class="sr-only" aria-live="polite" id="live-status">${escapeHtml(notice)}</div>
     ${error ? `<div class="error-banner" role="alert"><span>${escapeHtml(error)}</span><button id="dismiss-error" aria-label="Dismiss error">×</button></div>` : ''}`;
@@ -71,14 +75,16 @@ function landing(): void {
     <section class="hero">
       <div class="hero-copy">
         <p class="eyebrow"><span>01</span> Verifiable OCR workshop</p>
-        <h1>Turn a scan into text you can <em>trace.</em></h1>
-        <p class="lede">Make a selectable, audiobook-ready reading pack without sending private pages to a cloud. Every line keeps its source page and coordinates.</p>
+        <h1>Make reading packs from <em>scanned pages.</em></h1>
+        <p class="lede">For readers with scanned books or reports who need selectable text linked to its source page.</p>
         <div class="hero-actions">
-          <label class="primary-button" for="file-input">${icon('scan')} Choose scans</label>
-          <span>PDF, PNG, JPEG or WebP</span>
+          <a class="primary-button" href="/demo/">${icon('trace')} Try it with sample data</a>
+          <span>Opens a marked one-page reading pack</span>
         </div>
+        <div class="import-actions"><label class="text-button file-button" for="file-input">${icon('scan')} Choose your scans</label><span>PDF, PNG, JPEG or WebP</span></div>
         <input class="visually-hidden" id="file-input" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" multiple />
-        <p class="trust-note">${icon('lock')} Only process material you have the right to use. Files and corrections stay in this browser.</p>
+        <ul class="hero-facts"><li>Sample data uses its own workspace.</li><li>Pages stay in this browser.</li><li>Works offline after the first visit.</li></ul>
+        <p class="trust-note">${icon('lock')} Only process material you have the right to use.</p>
       </div>
       <figure class="hero-art">
         <picture><source srcset="/assets/hero-workbench.avif" type="image/avif"><source srcset="/assets/hero-workbench.webp" type="image/webp"><img src="/assets/hero-workbench.jpg" width="1200" height="800" alt="A worn book under cyan inspection light, connected by guide threads to a tidy stack of reading slips" fetchpriority="high" decoding="async"></picture>
@@ -113,6 +119,7 @@ function landing(): void {
 }
 
 function pricingSection(): string {
+  if (demoMode) return `<section class="pricing-section" aria-labelledby="demo-next-title"><div><p class="eyebrow"><span>04</span> Demo workspace</p><h2 id="demo-next-title">Try the trace, then start your own pack.</h2><p>This demo contains one preloaded page. Start for real to import scans into your personal browser library.</p></div><div class="license-panel"><p class="license-active">${icon('check')} Sample pack ready</p><p>Demo projects are separate from your library and are discarded when you leave.</p><button class="primary-button" id="start-real-panel">Start for real</button></div></section>`;
   return `<section class="pricing-section" aria-labelledby="unlock-title">
     <div><p class="eyebrow"><span>04</span> Desktop-quality unlock</p><h2 id="unlock-title">Free for a chapter. One-time for the shelf.</h2><p>Every project can be corrected, backed up, and exported. A one-time <strong>$19 USD</strong> license adds unlimited-page OCR and audiobook SSML export on your devices.</p></div>
     <div class="license-panel">
@@ -452,6 +459,31 @@ function revokeImages(): void { imageUrls.forEach((url) => URL.revokeObjectURL(u
 
 function bindGlobal(): void {
   document.querySelector('#dismiss-error')?.addEventListener('click', () => { error = ''; render(); });
+  document.querySelector('#reset-demo')?.addEventListener('click', () => resetDemo());
+  document.querySelector('#start-real')?.addEventListener('click', () => leaveDemo());
+  document.querySelector('#start-real-panel')?.addEventListener('click', () => leaveDemo());
+}
+
+async function resetDemo(): Promise<void> {
+  if (!demoMode) return;
+  revokeImages();
+  await discardDemoDocuments();
+  active = createSampleDocument();
+  await saveDocument(active);
+  documents = await listDocuments();
+  selectedPage = 0;
+  selectedBlock = null;
+  reviewOnly = false;
+  cropMode = false;
+  notice = 'Sample reading pack reset.';
+  render();
+}
+
+async function leaveDemo(): Promise<void> {
+  if (!demoMode) return;
+  revokeImages();
+  await discardDemoDocuments();
+  location.assign('/');
 }
 
 function legalPage(kind: 'privacy' | 'terms'): void {
@@ -470,17 +502,34 @@ function legalPage(kind: 'privacy' | 'terms'): void {
   </main>${footer()}`;
 }
 
+function notFoundPage(): void {
+  app.innerHTML = `${header()}<main id="main" class="legal-page" tabindex="-1"><p class="eyebrow"><span>404</span> Page not found</p><h1>This page is not on the workbench.</h1><p class="legal-lede">Use the library to make or open a reading pack.</p><a class="primary-button" href="/">Return to the library</a></main>${footer()}`;
+}
+
 function render(): void {
-  if (location.pathname.startsWith('/privacy')) legalPage('privacy');
-  else if (location.pathname.startsWith('/terms')) legalPage('terms');
-  else if (active) workbench();
-  else landing();
+  if (location.pathname.startsWith('/privacy')) { document.title = 'Privacy — Scan Reading Pack'; legalPage('privacy'); }
+  else if (location.pathname.startsWith('/terms')) { document.title = 'Terms — Scan Reading Pack'; legalPage('terms'); }
+  else if (location.pathname === '/' || location.pathname === '/index.html' || location.pathname.startsWith('/demo')) {
+    document.title = demoMode ? 'Demo — Scan Reading Pack' : 'Scan Reading Pack — trace text from scans';
+    if (active) workbench(); else landing();
+  }
+  else { document.title = 'Page not found — Scan Reading Pack'; notFoundPage(); }
   document.querySelector('.skip-link')?.addEventListener('click', () => requestAnimationFrame(() => document.querySelector<HTMLElement>('#main')?.focus()));
 }
 
 async function start(): Promise<void> {
-  acceptReturnedLicense();
-  [documents, license] = await Promise.all([listDocuments(), getLicenseState()]);
+  const url = new URL(location.href);
+  demoMode = location.pathname.startsWith('/demo') || url.searchParams.get('demo') === '1';
+  setDemoMode(demoMode);
+  if (!demoMode) acceptReturnedLicense();
+  documents = await listDocuments();
+  if (demoMode && !documents.length) {
+    active = createSampleDocument();
+    await saveDocument(active);
+    documents = await listDocuments();
+  }
+  if (demoMode) active = documents[0] || null;
+  if (!demoMode) license = await getLicenseState();
   render();
   window.addEventListener('online', render); window.addEventListener('offline', render);
   const updateSW = registerSW({
@@ -492,4 +541,4 @@ async function start(): Promise<void> {
   });
 }
 
-start().catch((reason) => { console.error(reason); app.innerHTML = `<main id="main" class="fatal-state" tabindex="-1"><h1>Scan Reading Pack</h1><p>The local workspace could not start. Reload the page or clear this site’s storage.</p><button onclick="location.reload()">Reload</button></main>`; });
+start().catch((reason) => { console.error(reason); app.innerHTML = `<main id="main" class="fatal-state" tabindex="-1"><h1>Scan Reading Pack</h1><p>The local workspace could not start. Reload the page or clear this site’s storage.</p><button id="reload-app">Reload</button></main>`; document.querySelector('#reload-app')?.addEventListener('click', () => location.reload()); });
