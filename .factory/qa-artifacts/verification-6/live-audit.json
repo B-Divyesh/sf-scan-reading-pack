@@ -1,0 +1,71 @@
+{
+  "desktop": {
+    "rootStatus": 200,
+    "demoDatabases": [
+      "demo:scan-reading-pack",
+      "scan-reading-pack"
+    ],
+    "personalDocumentCountInDemo": 0,
+    "tracePointerObstructions": [
+      {
+        "line": 4,
+        "clickable": false,
+        "topClass": "project-foot",
+        "scrollY": 528
+      }
+    ],
+    "archiveNames": [
+      "README.txt",
+      "reading.md",
+      "reading.txt",
+      "reading.html",
+      "source-map.json",
+      "source-pages/page-1.webp"
+    ],
+    "ocrText": "THE NIGHT READING ROOM",
+    "requestCount": 36,
+    "externalRuntimeRequests": [],
+    "nonGetRequests": [],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "axeSeriousCritical": [],
+    "labelNameViolations": []
+  },
+  "mobile": {
+    "firstScreen": {
+      "h1": {
+        "top": 163,
+        "bottom": 284.125
+      },
+      ".lede": {
+        "top": 308.125,
+        "bottom": 391.515625
+      },
+      ".hero-actions": {
+        "top": 423.515625,
+        "bottom": 503.515625
+      },
+      ".hero-facts": {
+        "top": 617.515625,
+        "bottom": 687.515625
+      }
+    },
+    "width": {
+      "scroll": 390,
+      "client": 390
+    },
+    "controlCount": 26,
+    "minimumTarget": {
+      "width": 44,
+      "height": 44
+    },
+    "axeSeriousCritical": [],
+    "consoleErrors": []
+  },
+  "reducedMotion": {
+    "scrollBehavior": "auto",
+    "transitionDuration": "0s",
+    "animationDuration": "1e-05s",
+    "heroTransform": "none"
+  }
+}
