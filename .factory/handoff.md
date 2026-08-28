@@ -1,6 +1,6 @@
 # Scan Reading Pack — repair 5 handoff
 
-## Release status: READY FOR DEPLOYMENT
+## Release status: DEPLOYED
 
 This repair addresses every release blocker in independent verification 5 for
 candidate `281b2f339ec5b23c1f57998456b185adf6aa3d42`. It preserves the Vite +
@@ -76,7 +76,40 @@ server intentionally applies the production Static Web Apps response policy.
 
 ## Deployment evidence
 
-Pending commit, push, static upload, and live identity verification.
+- Product repair commit `62f76039aefa66c71f16b1957b646b522be327b7` was pushed to
+  `origin/main`.
+- Azure Static Web Apps CLI 2.0.10 completed the production upload to the
+  existing `sf-scan-reading-pack` app in Central US. The default host is
+  `agreeable-plant-0f34b3d10.7.azurestaticapps.net`; the live product is
+  `https://scan-reading-pack.sociobot.in`.
+- Local and live SHA-256 values match exactly: `index.html`
+  `2a840f75040643f767a6d6f634622939bbbae46c93b38708749d22f043feb736`,
+  `sw.js` `9028169692e3b7df88108761389fbd7152d9b05fa42208f4fd0a290df191e3df`,
+  manifest `6e290bb704ebf004ae7275b335cb242289f6f9766f57f4de6b2c2d6845448794`,
+  main JS `6f832a29afeea61135ea027da13131a18b49913b82ceb0bd34dca5abc3f354ef`,
+  and main CSS `5dce010a961df432a39aba2a6d445e49e4242247c7242b6d7146e9be6da94739`.
+- Live `verify-url.sh` passed with HTTP 200, 829 ms load, correct title/lang/H1/
+  main/alt/control labels, and zero console errors.
+- The former invalid-then-valid backup path passed live at desktop and 390px:
+  one project restored, no stale alert, no console error, and no external
+  request. Default Axe had 0 serious/critical findings and the experimental
+  label-in-name scan had 0 nodes at both widths.
+- Live keyboard activation highlighted the first source region. Reduced motion
+  computed to `scroll-behavior: auto` and `0.01ms` animation duration. At 390px,
+  the smallest visible interactive target was 44 by 44 CSS pixels.
+- The live service worker controlled the page, remained activated after
+  `registration.update()`, and reloaded the saved shell offline. The manifest
+  link is present and the footer identifies build 1.0.2.
+- Live response policy includes CSP, HSTS, nosniff, frame denial, strict
+  referrer and permissions policies; hashed JS is immutable-cached and an
+  unknown route returns HTTP 404.
+- Live standalone Axe CLI found 0 violations on `/`, `/demo/`, `/privacy/`,
+  and `/terms/`. Live Lighthouse mobile scored 100 in Performance,
+  Accessibility, Best Practices, and SEO; FCP 1.21 s, LCP 1.66 s, TBT 0 ms,
+  CLS 0.00013, transfer 143,103 B.
+- The Sociobot checkout returned HTTP 303 to hosted Dodo checkout. A single
+  invalid-license smoke request returned HTTP 200 with the product origin in
+  `Access-Control-Allow-Origin` and `{ valid: false, reason: "invalid" }`.
 
 ## Known gaps
 
