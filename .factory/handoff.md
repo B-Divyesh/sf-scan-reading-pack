@@ -67,7 +67,26 @@ npm run test:e2e -- --grep @claim:offline-reload
 
 ## Deploy
 
-The static deployment root is `dist/`. Deploy with:
+Repair implementation commit `7f138ff` was pushed to `origin/main` and
+deployed to `https://scan-reading-pack.sociobot.in` on 2026-08-28 (Azure Static
+Web Apps deployment `f1b61384-2296-4d91-8185-faf9ff59c1fc`). The live
+`index.html` SHA-256 matched `dist/index.html` exactly:
+`e4fff52a242403f25ed85159bcb158b7c8f9d09e61ae2e27c6d7af9f2c7a6d92`.
+
+Live post-deploy evidence:
+
+- `verify-url.sh` passed with no browser console errors, title, `lang`, one
+  H1, main landmark, and complete image alt text.
+- `/demo/`, `/privacy/`, and `/terms/` returned HTTP 200; an unknown route
+  returned HTTP 404 and rendered the designed “This page is not on the
+  workbench.” page, both before and after service-worker control.
+- The live demo showed its sample workbench and persistent demo banner at
+  390px.
+- The live app JS response has `Cache-Control: public, max-age=31536000,
+  immutable`; root and asset responses have the configured CSP, nosniff, and
+  referrer policy.
+
+The static deployment root is `dist/`. Repeat deployment with:
 
 ```bash
 /opt/fleet/lib/deploy-static.sh scan-reading-pack dist
