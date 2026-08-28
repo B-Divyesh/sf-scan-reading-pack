@@ -1,6 +1,6 @@
 # Scan Reading Pack — repair 4 handoff
 
-## Release status: READY FOR STATIC DEPLOY
+## Release status: DEPLOYED
 
 This repair addresses every release-blocking finding in independent verification
 4 for candidate `4402b065e3c6102e8a05d956040130bb3eee5227` while preserving the
@@ -79,6 +79,22 @@ npm run test:e2e
 Deploy the committed `dist/` output as the existing static application with
 the included `staticwebapp.config.json`. No infrastructure, DNS, billing, or
 third-party configuration was changed.
+
+## Deployment evidence
+
+- Product repair commit: `9d2af435d7b614d8dbcc2f0a6bfeb040a41f6ef5`.
+- Static deployment: Azure Static Web Apps deployment
+  `d9fa8b80-c5e4-4881-82b4-b5ddd25075b5` completed successfully to
+  `https://scan-reading-pack.sociobot.in`.
+- Local and live `index.html` SHA-256 match:
+  `c75391f38f086ba5cecef021f57437314f59c5af7dd806bc983c534930cfc4bf`.
+- Live headers include CSP, HSTS, nosniff, strict referrer policy, frame and
+  permissions policy; the current hashed main JS is immutable-cached; an
+  unknown live route returns HTTP 404.
+- The live verifier reports title, language, one H1, main, image alt text,
+  labelled buttons, and zero console errors. Experimental Axe passed at
+  desktop and 390px. At 390px, all 26 visible demo controls were at least
+  44px and 200% text reflow measured 390px document width in a 390px viewport.
 
 ## Known gaps
 
