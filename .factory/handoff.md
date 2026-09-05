@@ -1,70 +1,55 @@
-# Scan Reading Pack — repair 6 handoff
+# Scan Reading Pack — repair 7 handoff
 
 ## Release status: DEPLOYED
 
-This repair addresses every blocker in independent verification 6 for
-candidate `99b85bcc7f0fca2a58fa9f282fcaa87609e802ae`. It preserves the Vite +
-TypeScript offline PWA, isolated demo workspace, local OCR, trace/correction
-workflow, export formats, and Sociobot one-time license flow.
+Repair 7 closes both findings and the untested-copy claim in strict review 1.
+The deployed implementation is commit
+`f6e785b7ca64fa9d28a4e18a97c8636e9ae1c1f3`. Documentation and verification
+evidence follow that implementation commit in Git history.
 
-## Reproduction and repairs
+## What changed
 
-1. At 1280 × 720, the candidate put the H1 at y=212–607, the audience at
-   y=631–701, the sample action at y=733–789, and the facts at y=877–947.
-   A low-height desktop layout now uses a 56px maximum H1, tighter vertical
-   rhythm, and balanced columns. The repaired H1 is y=164–334, audience
-   y=348–418, action and note y=432–488, and all three facts y=562–632.
-2. At 1440 × 900, line 4's trace button was covered by `.project-foot`.
-   `.source-panel` and `.text-panel` now have `min-height: 0` and clipped
-   overflow, so `.blocks` owns the scroll and no content escapes the fixed
-   workbench row. A regression checks all five lines against the scroller,
-   `elementFromPoint()`, real pointer clicks, keyboard focus, and the 3px
-   visible focus ring.
-3. `.factory/claims.json` now registers the 24-hour active-license check and
-   refund/revocation behavior. Exact tests cover both sides of 86,400,000ms,
-   ensure only one verification request, apply a recorded revoked verdict,
-   confirm the user-facing revoked notice, remove SSML, and restore the free
-   five-page boundary.
-4. Build identity advances to 1.0.3 and the installed-app start URL to `?v=3`.
+- Removed the unmeasurable “Desktop-quality unlock” claim. The public offer now
+  says exactly what its existing claim test proves: a $19 USD one-time license
+  adds unlimited-page OCR and SSML export.
+- Replaced metaphorical and mood headings across the landing, demo, legal, 404,
+  empty, and update states with literal task names. Examples now include “Local
+  scan-to-text tool,” “Make a reading pack in four steps,” “Paid license,” and
+  “We could not find this page.”
+- Expanded `.factory/copy-audit.md` from seven rows to every string in all
+  personal and demo landing states. It covers headings, controls, body copy,
+  empty states, status and recovery copy, paid states, and footer text. Every
+  sentence is at most 22 words and the terminology table is complete.
+- Added a browser regression that checks rendered public routes for banned
+  marketing terms and the rejected metaphors. It checks user-visible output
+  instead of matching implementation source strings.
+- Extended the 44px target regression to desktop and phone. Header navigation
+  now has at least a 44×44px target without exposing hidden phone navigation.
+- Updated `fflate` from 0.8.2 to 0.8.3. A clean install now reports zero npm
+  vulnerabilities.
+- Advanced the installed-app start URL to `?v=4` and the public build label to
+  1.0.4 so installed clients detect the new service worker.
+- Added the verb-first catalog description and copied the identical 88-byte
+  file to `/work/.evidence/catalog-description.txt`.
+- Wrote the actual $19 USD one-time offer metadata to
+  `/work/.evidence/billing-offer.json`. No credential is present.
 
-## Local verification evidence
+## Earlier finding disposition
 
-All commands ran from `/work/repo` on 2026-08-28.
+| Review | Disposition and current proof |
+| --- | --- |
+| Verification 1: no claims/demo, weak first screen, missing policy/metadata/404 | Closed. The isolated one-click sample, 18 exact claims, full first screen, headers, metadata, caching, and designed 404 all pass. |
+| Verification 2: incomplete paid behavior, small targets, stale import error | Closed. Page-six OCR and SSML are exercised; all demo controls are at least 44×44px; valid import clears the error. |
+| Verification 3: unlisted capabilities and flaky full suite | Closed. Every claim command passed separately and the final full suite passed 49 with 11 documented skips. |
+| Verification 4: narrow privacy/offline/trace coverage, label mismatch, 200% overflow, handled console error | Closed. Real OCR privacy/offline paths, every sample trace, label-in-name, 200% reflow, and clean consoles pass. |
+| Verification 5: live backup restore blocked by CSP, trace names, confidence/deletion claims, dead links | Closed. Restore recovery, accessible trace names, declared confidence/deletion claims, and cross-route links pass. |
+| Verification 6: desktop first-read overflow, covered trace controls, missing entitlement claims | Closed. First-read bounds fit, all five traces accept pointer/keyboard input, and daily/revocation claims pass. |
+| Verification 7: no defects | Confirmed. Its functional results reproduce on the repair 7 build. |
+| Strict review 1: untested desktop-quality claim and metaphor headings/incomplete audit | Closed. The claim was removed, all public headings are literal, and the complete landing-copy audit plus rendered-route regression pass. |
 
-- Clean `npm ci`: 403 packages installed; 0 audit vulnerabilities.
-- `npm test`: 13/13 Vitest tests passed in 3 files.
-- `npm run lint`: TypeScript `--noEmit` passed.
-- `npm run build`: passed; `dist/index.html` exists; the PWA precache contains
-  22 entries (625.55 KiB).
-- Every exact command for all 18 entries in `.factory/claims.json` passed
-  separately. Shared OCR/entitlement matrices intentionally skip only their
-  duplicate mobile project.
-- `npm run test:e2e`: 46 passed, 12 intentional cross-project skips, 0 failed
-  across Desktop Chrome and 390 × 844 mobile. Coverage includes real local
-  OCR, import formats, corrections, trace/crop, ZIP and backup, delete,
-  free/paid boundaries, privacy traffic, CSP/404 policy, offline shell,
-  cached offline OCR, keyboard focus, 200% text, and 44px touch targets.
-- Playwright Axe found zero serious/critical issues on `/`, `/demo/`,
-  `/privacy/`, `/terms/`, and the real 404 route at both configured viewports.
-- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173` passed: HTTP 200,
-  629ms load, correct title and language, one H1/main, complete alt/control
-  names, and no console errors. Evidence is in
-  `.factory/qa-artifacts/repair-6/local-verify/`.
-- Local Lighthouse mobile: Performance 98, Accessibility 100, Best Practices
-  100, SEO 100; FCP 1.7s, LCP 2.3s, TBT 0ms, CLS 0, total transfer 195 KiB.
-  Evidence is `.factory/qa-artifacts/repair-6/lighthouse-local.json`.
-- Initial authored JS is 51.33 kB raw plus 5.71 kB Workbox (22.13 kB gzip
-  combined); CSS is 20.81 kB raw / 5.38 kB gzip; fonts total 60.90 kB; the
-  mobile hero AVIF is 37.06 kB.
-- The production-policy preview returned CSP, strict referrer, nosniff, frame
-  denial, and permissions headers. HTML revalidates and an unknown route
-  returns HTTP 404. The service-worker prompt/update wiring has a contract
-  regression; offline control and reload pass in Chromium.
+## Clean local verification
 
-Library/CLI consumer packaging, application-backend health, authentication,
-and backend concurrency are not applicable to this static local-first PWA.
-
-## Run and verify
+Run from `/work/repo` on 5 September 2026:
 
 ```bash
 npm ci
@@ -74,114 +59,76 @@ npm run build
 npm run test:e2e
 ```
 
-Run any claim using the exact command stored in `.factory/claims.json`. The
-browser suite serves `dist/` with the production response policy.
+- `npm ci`: 403 packages installed; 0 vulnerabilities.
+- `npm test`: 13/13 Vitest tests passed.
+- `npm run lint`: TypeScript `--noEmit` passed.
+- `npm run build`: passed and produced `dist/index.html`; the PWA precache has
+  22 entries totaling 625.68 KiB.
+- Every exact command in all 18 `.factory/claims.json` entries passed
+  separately on the final build. OCR/entitlement matrices intentionally skip
+  only duplicate phone executions.
+- `npm run test:e2e`: 49 passed, 11 documented cross-project skips, 0 failed.
+- The required local `verify-url.sh` check passed in 602ms with the correct
+  title and language, one H1/main, complete alt/control names, and no console
+  errors.
+- Playwright Axe found zero serious or critical issues on `/`, `/demo/`,
+  `/privacy/`, `/terms/`, and the real 404 route. Keyboard focus is a visible
+  3px ring. Reduced motion gives `0s` transitions and automatic scrolling.
+- Local Lighthouse mobile: Performance 97, Accessibility 100, Best Practices
+  100, SEO 100; FCP 1.7s, LCP 2.4s, TBT 0ms, CLS 0, 195 KiB transfer.
+- Initial authored JavaScript is 51,340 bytes plus 5,714 bytes of Workbox
+  (21,886 bytes gzip combined). CSS is 20,948 bytes / 5,380 bytes gzip. Fonts
+  total 60,896 bytes. The mobile hero AVIF is 37,063 bytes.
 
-## Deployment evidence
+## Live verification
 
-- Product repair commit `ba261605b5840789e6c37a8b9db13a52e03955f1` was
-  pushed to `origin/main`.
-- Azure Static Web Apps deployment `d5a59818-f86d-4490-a86f-cae4dfa6d934`
-  succeeded against the existing `sf-scan-reading-pack` app in Central US.
-  The default host is `agreeable-plant-0f34b3d10.7.azurestaticapps.net`; the
-  production URL is `https://scan-reading-pack.sociobot.in`.
-- Local and live SHA-256 hashes match exactly: `index.html`
-  `ce17c207c8e9a447aa1c9277f69e70638b1361c37295ab2f9fb90e0086e7bdbe`,
-  `sw.js` `48cc45db44873704c9af67db395244e2cf67fa391aa286ed7371fa431eb48682`,
-  manifest `4d973d3087c913d1b81a93c91a7a7ed6577cc3ab1e7604765905858fcef0097d`,
-  main JS `427a9cc76dcffc61fd0b6268821ec03e26ab3d95f0c45d855d679cdd84aff143`,
-  and main CSS
-  `e0db26c32d5a9d1a9447333817d62dcd07b7bf0f499c0a7f8b47a942f2981080`.
-- Live `verify-url.sh` passed: HTTP 200, 1,231ms load, correct title and
-  language, one H1/main, complete alt/control names, and zero console errors.
-- Live 1280 × 720 first-read geometry exactly matches the repaired local
-  bounds and ends at y=632. At 1440 × 900, all five trace controls owned their
-  pointer hit, accepted a real click, held keyboard focus, and showed a solid
-  3px outline.
-- Live Axe found zero serious/critical issues across `/`, `/demo/`,
-  `/privacy/`, `/terms/`, and the 404 route. At 390 × 844, all first-read
-  content fits, the smallest of 26 visible demo controls is 44 × 44px, and
-  Axe again found zero serious/critical issues.
-- The live service worker controls the page, reloads the shell offline, and
-  completes `registration.update()`. The production root returns HTTP 200,
-  unknown routes return 404, and CSP, HSTS, nosniff, frame, referrer, and
-  permissions policies are present.
-- Live Lighthouse mobile: Performance 100, Accessibility 100, Best Practices
-  100, SEO 100; FCP 1.2s, LCP 1.5s, TBT 0ms, CLS 0, transfer 140 KiB.
-- Post-deploy evidence is in `.factory/qa-artifacts/repair-6/live-verify/`,
-  `live-audit.json`, and `lighthouse-live.json`.
+- The final build was deployed to the existing one-replica-equivalent Azure
+  Static Web App `sf-scan-reading-pack` and is live at
+  `https://scan-reading-pack.sociobot.in`. No backend, database, volume, DNS,
+  billing setting, or unrelated resource was changed.
+- Fresh 1280×720 and 390×844 browsers showed the job, audience, sample action,
+  action result, and all three facts before scrolling. The last fact ended at
+  y=632 on desktop and y=688 on phone. Neither viewport overflowed sideways.
+- In both fresh browsers, all five sample lines showed their source regions. A
+  correction appeared in the exported ZIP and source map. Reset restored the
+  original sample, and the demo label stayed visible throughout.
+- The demo database existed only while the sample was open. Personal project
+  counts remained 0 before, during, and after the flow. Leaving the demo
+  deleted its database. Every visible demo control measured at least 44×44px.
+- All observed landing/demo requests were same-origin. Both fresh browser
+  consoles stayed clean.
+- The service worker controlled the page, completed an update check, and
+  reloaded the populated sample offline with the offline notice.
+- Privacy, Terms, and Demo returned 200 with route-specific titles. The
+  deliberate unknown route returned HTTP 404 with one H1/main and a route
+  home. Axe found zero serious or critical issues on every route.
+- The live plain-word policy check passed every route. No banned marketing
+  term or rejected workshop, workbench, bench, shelf, chapter, or
+  desktop-quality label is rendered.
+- The worker URL verifier passed in 891ms with no console errors. Live
+  Lighthouse mobile scored 100 for Performance, Accessibility, Best Practices,
+  and SEO; FCP 1.2s, LCP 1.5s, TBT 0ms, CLS 0, 140 KiB transfer.
+- Security headers include CSP, HSTS, `nosniff`, frame denial, strict referrer,
+  and restrictive permissions policies. Hashed assets use one-year immutable
+  caching. The checkout endpoint returns the expected hosted-checkout redirect.
+  No paid transaction was made; valid and revoked entitlements are proven with
+  recorded responses in the claim tests.
+
+Local and live SHA-256 hashes match:
+
+| File | SHA-256 |
+| --- | --- |
+| `index.html` | `82ba02ec0a61e38f0a7ef3545f30bc338e6739147d9adb0875e0e140ce688c84` |
+| `manifest.webmanifest` | `9d3e65c26eadff7b20b8a2bd16766002ca0c2546b46e1114d18c2679ed63e415` |
+| `sw.js` | `00d468f68a9e1e210a484aa0e21098f4f2c59f5b9051d4049de563e0cb9801ce` |
+| `assets/main-Mi_6xeKA.js` | `cbb15694162fc2d7e905d8b8e324312b0f85fe0a41f658676eb94c9d55b497e1` |
+| `assets/main-A5TKAGhl.css` | `e2de76524b962610f2000316b090a8168a1606019eeb8d45f7a430c5324ce783` |
+
+Evidence is in `.factory/qa-artifacts/repair-7/`.
 
 ## Known gaps
 
-None in the repaired product. A new independent release verification is still
-required by the factory process.
-
----
-
-## Independent verification 7 — PASS
-
-**Candidate:** `b103da07ccafc184d7bb60c6d1668ba19b7a0226`<br>
-**Verified URL:** https://scan-reading-pack.sociobot.in<br>
-**Date:** 2026-08-28
-
-**Release status: PASS.** A clean `npm ci`, all 18 exact claims commands,
-`npm test` (13 passing), `npm run lint`, `npm run build`, and the complete
-Playwright suite (46 passed, 12 documented skips) passed. Fresh live first-read
-copy identifies the job, audience, and one-click sample action. The live demo
-traced every sample line to its source, saved a correction, and exported the
-reading-pack ZIP with no errors. Local production preview reloaded offline
-under a controlling service worker and completed an update check.
-
-Live privacy traffic was same-origin only; Axe reported no serious/critical
-issues; keyboard focus is visibly 3px cyan; 390px had no horizontal overflow.
-Security headers, immutable hashed-asset caching, and 404 behavior passed.
-The Sociobot license verify allowance was freshly observed as 30 requests;
-request 31 returned 429 with `Retry-After: 4`. Local/live HTML, manifest, main
-JS and CSS SHA-256 hashes matched exactly. No defects were found.
-
-See `.factory/verification-7.md` for the full evidence and
-`.factory/qa-artifacts/verification-7/verify-url/` for live screenshots and
-the worker verification output.
-
----
-
-## Strict review 1 — FAIL
-
-**Reviewed:** 2026-09-05<br>
-**Implementation:** `ba261605b5840789e6c37a8b9db13a52e03955f1`<br>
-**Deployment evidence:** `b103da07ccafc184d7bb60c6d1668ba19b7a0226`<br>
-**Documentation checkout:** `bd5dafe10a42ba610d3cf8bb9fd67ae941963364`
-
-The fresh strict review found two public-copy defects and one untested public
-claim. All 18 declared claim commands still passed independently from a clean
-checkout. `npm test` passed 13/13, lint and build passed, and the full browser
-suite passed 46 with 12 documented skips.
-
-Fresh live desktop and phone contexts passed the complete first-read gate,
-sample trace/edit/export/reset flow, demo/personal storage isolation, live
-backup recovery under production CSP, invalid-import recovery, real local OCR,
-keyboard/focus, 44px targets, 200% text, reduced motion, route titles, legal
-pages, designed 404, privacy traffic, offline reload, and worker update check.
-The required URL verifier passed. Axe found no serious/critical issues.
-
-Fresh mobile Lighthouse scored 100 for Performance, Accessibility, Best
-Practices, and SEO; LCP was 1.65s, TBT 1ms, CLS 0.00013, and transfer 143,284
-bytes. Clean local and live hashes match for HTML, manifest, service worker,
-main JavaScript, and main CSS.
-
-The complete decision and earlier-finding disposition table are in
-`.factory/review-1.md`. Supporting screenshots, worker verifier output,
-Lighthouse JSON, and the reproducible live review script are in
-`.factory/qa-artifacts/review-1/`.
-
-Required repair: remove or replace the unlisted, unmeasurable
-**“Desktop-quality unlock”** statement. Replace metaphor/decorative public
-headings such as **“Verifiable OCR workshop,” “From image to evidence,” “Free
-for a chapter. One-time for the shelf.”**, and **“This page is not on the
-workbench.”** with literal section and error names. Then expand
-`.factory/copy-audit.md` from its current seven lines to every landing-page
-sentence and rerun the claims cross-check.
-
-A current npm advisory separately affects `fflate`'s `unzipSync`, which the
-shipped app neither imports nor exposes; upgrading from 0.8.2 to 0.8.3 is
-routine maintenance, not a product finding.
+No product defect remains from the current or earlier reviews. A real paid
+purchase was deliberately not made; the registered checkout is live, while
+license activation and revocation use deterministic recorded gateway responses
+in tests. Independent factory re-verification is still required.

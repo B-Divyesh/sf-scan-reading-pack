@@ -1,0 +1,154 @@
+{
+  "desktop": {
+    "firstRead": {
+      "title": "Scan Reading Pack — trace text from scans",
+      "h1": {
+        "text": "Make reading packs from scanned pages.",
+        "bottom": 334.0625,
+        "visible": true
+      },
+      "audience": {
+        "text": "For readers with scanned books or reports who need selectable text linked to its source page.",
+        "bottom": 417.875,
+        "visible": true
+      },
+      "action": {
+        "text": "Try it with sample data Opens a marked one-page reading pack",
+        "bottom": 487.875,
+        "visible": true
+      },
+      "facts": {
+        "text": "Sample data uses its own workspace.Pages stay in this browser.Cached OCR works offline.",
+        "bottom": 631.875,
+        "visible": true
+      },
+      "horizontalOverflow": false
+    },
+    "demo": {
+      "linesTraced": 5,
+      "exportFiles": [
+        "README.txt",
+        "reading.html",
+        "reading.md",
+        "reading.txt",
+        "source-map.json",
+        "source-pages/page-1.webp"
+      ],
+      "sampleReset": true,
+      "personalDocumentsBefore": 0,
+      "personalDocumentsDuring": 0,
+      "personalDocumentsAfter": 0,
+      "demoDatabaseBeforeLeave": true,
+      "demoDatabaseAfterLeave": false,
+      "minControlWidth": 44,
+      "minControlHeight": 44
+    },
+    "origins": [
+      "https://scan-reading-pack.sociobot.in"
+    ],
+    "errors": []
+  },
+  "phone": {
+    "firstRead": {
+      "title": "Scan Reading Pack — trace text from scans",
+      "h1": {
+        "text": "Make reading packs from scanned pages.",
+        "bottom": 284.125,
+        "visible": true
+      },
+      "audience": {
+        "text": "For readers with scanned books or reports who need selectable text linked to its source page.",
+        "bottom": 391.515625,
+        "visible": true
+      },
+      "action": {
+        "text": "Try it with sample data Opens a marked one-page reading pack",
+        "bottom": 503.515625,
+        "visible": true
+      },
+      "facts": {
+        "text": "Sample data uses its own workspace.Pages stay in this browser.Cached OCR works offline.",
+        "bottom": 687.515625,
+        "visible": true
+      },
+      "horizontalOverflow": false
+    },
+    "demo": {
+      "linesTraced": 5,
+      "exportFiles": [
+        "README.txt",
+        "reading.html",
+        "reading.md",
+        "reading.txt",
+        "source-map.json",
+        "source-pages/page-1.webp"
+      ],
+      "sampleReset": true,
+      "personalDocumentsBefore": 0,
+      "personalDocumentsDuring": 0,
+      "personalDocumentsAfter": 0,
+      "demoDatabaseBeforeLeave": true,
+      "demoDatabaseAfterLeave": false,
+      "minControlWidth": 44,
+      "minControlHeight": 44
+    },
+    "origins": [
+      "https://scan-reading-pack.sociobot.in"
+    ],
+    "errors": []
+  },
+  "routes": [
+    {
+      "path": "/",
+      "status": 200,
+      "title": "Scan Reading Pack — trace text from scans",
+      "h1": 1,
+      "main": 1,
+      "seriousOrCritical": []
+    },
+    {
+      "path": "/demo/",
+      "status": 200,
+      "title": "Demo — Scan Reading Pack",
+      "h1": 1,
+      "main": 1,
+      "seriousOrCritical": []
+    },
+    {
+      "path": "/privacy/",
+      "status": 200,
+      "title": "Privacy — Scan Reading Pack",
+      "h1": 1,
+      "main": 1,
+      "seriousOrCritical": []
+    },
+    {
+      "path": "/terms/",
+      "status": 200,
+      "title": "Terms — Scan Reading Pack",
+      "h1": 1,
+      "main": 1,
+      "seriousOrCritical": []
+    },
+    {
+      "path": "/missing-repair-7",
+      "status": 404,
+      "title": "Page not found — Scan Reading Pack",
+      "h1": 1,
+      "main": 1,
+      "seriousOrCritical": []
+    }
+  ],
+  "keyboardReducedMotion": {
+    "text": "Skip to main content",
+    "outlineWidth": "3px",
+    "outlineStyle": "solid",
+    "transitionDuration": "0s",
+    "scrollBehavior": "auto"
+  },
+  "offline": {
+    "controlled": true,
+    "reloaded": true,
+    "notice": true
+  }
+}
