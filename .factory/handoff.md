@@ -142,3 +142,46 @@ JS and CSS SHA-256 hashes matched exactly. No defects were found.
 See `.factory/verification-7.md` for the full evidence and
 `.factory/qa-artifacts/verification-7/verify-url/` for live screenshots and
 the worker verification output.
+
+---
+
+## Strict review 1 — FAIL
+
+**Reviewed:** 2026-09-05<br>
+**Implementation:** `ba261605b5840789e6c37a8b9db13a52e03955f1`<br>
+**Deployment evidence:** `b103da07ccafc184d7bb60c6d1668ba19b7a0226`<br>
+**Documentation checkout:** `bd5dafe10a42ba610d3cf8bb9fd67ae941963364`
+
+The fresh strict review found two public-copy defects and one untested public
+claim. All 18 declared claim commands still passed independently from a clean
+checkout. `npm test` passed 13/13, lint and build passed, and the full browser
+suite passed 46 with 12 documented skips.
+
+Fresh live desktop and phone contexts passed the complete first-read gate,
+sample trace/edit/export/reset flow, demo/personal storage isolation, live
+backup recovery under production CSP, invalid-import recovery, real local OCR,
+keyboard/focus, 44px targets, 200% text, reduced motion, route titles, legal
+pages, designed 404, privacy traffic, offline reload, and worker update check.
+The required URL verifier passed. Axe found no serious/critical issues.
+
+Fresh mobile Lighthouse scored 100 for Performance, Accessibility, Best
+Practices, and SEO; LCP was 1.65s, TBT 1ms, CLS 0.00013, and transfer 143,284
+bytes. Clean local and live hashes match for HTML, manifest, service worker,
+main JavaScript, and main CSS.
+
+The complete decision and earlier-finding disposition table are in
+`.factory/review-1.md`. Supporting screenshots, worker verifier output,
+Lighthouse JSON, and the reproducible live review script are in
+`.factory/qa-artifacts/review-1/`.
+
+Required repair: remove or replace the unlisted, unmeasurable
+**“Desktop-quality unlock”** statement. Replace metaphor/decorative public
+headings such as **“Verifiable OCR workshop,” “From image to evidence,” “Free
+for a chapter. One-time for the shelf.”**, and **“This page is not on the
+workbench.”** with literal section and error names. Then expand
+`.factory/copy-audit.md` from its current seven lines to every landing-page
+sentence and rerun the claims cross-check.
+
+A current npm advisory separately affects `fflate`'s `unzipSync`, which the
+shipped app neither imports nor exposes; upgrading from 0.8.2 to 0.8.3 is
+routine maintenance, not a product finding.

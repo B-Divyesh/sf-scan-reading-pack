@@ -1,0 +1,14 @@
+{
+  "url": "https://scan-reading-pack.sociobot.in",
+  "loadMs": 661,
+  "errors": [],
+  "a11y": {
+    "title": "Scan Reading Pack — trace text from scans",
+    "lang": "en",
+    "h1": 1,
+    "main": true,
+    "imgsMissingAlt": 0,
+    "buttonsUnlabeled": 0,
+    "textLength": 1811
+  }
+}
