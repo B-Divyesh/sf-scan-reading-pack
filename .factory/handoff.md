@@ -1,36 +1,38 @@
-# Scan Reading Pack — verification 8 handoff
+# Scan Reading Pack — review 2 handoff
 
 ## Status: PASS
 
-Independent verification 8 reviewed implementation
-`f6e785b7ca64fa9d28a4e18a97c8636e9ae1c1f3` with documentation commit
-`307f05a9ec8e3bda1162b3c1979d8d8dce9bef5b`. The later commit changes only
-factory documentation and evidence. No product code was changed.
-
-The full report is [`.factory/verification-8.md`](verification-8.md).
+Strict review 2 confirmed implementation
+`f6e785b7ca64fa9d28a4e18a97c8636e9ae1c1f3` using documentation commit
+`866a838b9bf4646ce317ddac67eddc07454aa39d`. The later commit contains only
+factory reports and evidence; no product code changed. The full report is
+[`.factory/review-2.md`](review-2.md).
 
 ## What was verified
 
 - Fresh desktop and phone first screens state the job, audience, sample action,
-  action result, and three facts before scrolling.
-- The live sample is populated in one click. All five source traces, correction,
-  ZIP content, persistent demo label, reset, and personal/demo storage isolation
-  passed.
-- Live invalid backup, oversized/unsupported import, valid recovery, and real
-  OCR passed without application console errors or outgoing product-data
-  requests.
+  action result, and three facts before scrolling, with no overflow or console
+  errors.
+- The live sample is populated in one click. All five source traces, saved
+  correction/reset, persistent demo label, and demo/personal storage isolation
+  passed; Start for real left the fresh personal library empty.
+- Normal, invalid, boundary, and recovery cases cover local OCR; announced
+  formats; backup recovery; size/type errors; crop and correction persistence;
+  free/paid page boundary; and revocation.
 - Keyboard focus, 44px controls, 200% reflow, reduced motion, Axe, legal pages,
   links, route titles, the designed HTTP 404, service-worker control/update,
   and populated offline reload passed.
 - Every exact command for all 18 claims passed separately from a clean clone.
   The full suite passed 49 tests with 11 intentional project skips.
-- Live Lighthouse scored 100 in Performance, Accessibility, Best Practices,
-  and SEO. FCP was 1.20 s, LCP 1.65 s, TBT 0 ms, CLS 0.00013, and transfer
-  143,273 bytes.
+- The prior fresh live Lighthouse result remains 100 in Performance,
+  Accessibility, Best Practices, and SEO. The current review also reproduced
+  live URL verification, Axe, PWA offline/update, route, header, and request
+  checks.
 - Local and live hashes match for HTML, manifest, service worker, main
   JavaScript, and main CSS.
 - Every earlier finding, including low-severity console output and strict-copy
-  findings, is closed with current evidence.
+  findings, is closed with current evidence. There are zero defects and zero
+  untested public claims.
 
 ## Run the verification
 
