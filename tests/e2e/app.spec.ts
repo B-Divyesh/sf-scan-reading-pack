@@ -589,8 +589,7 @@ test('@claim:refund-revocation removes paid access after a revoked verdict', asy
   await context.close();
 });
 
-test('@regression: every visible mobile control has a 44px touch target', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile-390', 'This measurement is specific to the 390px verifier viewport.');
+test('@regression: every visible demo control has a 44px target', async ({ page }) => {
   await page.goto('/demo/');
   const controls = page.locator('a:visible, button:visible, label.file-button:visible');
   const count = await controls.count();

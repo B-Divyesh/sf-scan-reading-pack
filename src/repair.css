@@ -28,6 +28,17 @@
   padding: 8px 0;
 }
 
+/* Desktop header links keep the same usable target as touch controls. */
+@media (min-width: 901px) {
+  .site-header nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 /* Long price and license copy must reflow instead of widening a phone layout. */
 .pricing-section,
 .pricing-section > *,
