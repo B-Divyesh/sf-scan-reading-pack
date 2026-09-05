@@ -96,6 +96,20 @@ test('landing page is accessible and responsive', async ({ page }, testInfo) => 
   await page.screenshot({ path: testInfo.outputPath('landing.png'), fullPage: true });
 });
 
+test('@regression: public headings and landing copy use literal plain words', async ({ page }) => {
+  const metaphorTerms = /\b(?:workbench|workshop|bench|shelf|chapter|desktop-quality)\b/i;
+  const bannedMarketingTerms = /\b(?:leverage|seamless|effortless|robust|powerful|intuitive|reimagine|supercharge|delightful|journey|ecosystem|ai-powered)\b/i;
+  for (const route of ['/', '/demo/', '/privacy/', '/terms/', '/not-a-real-page']) {
+    const response = await page.goto(route);
+    if (route === '/not-a-real-page') expect(response?.status()).toBe(404);
+    const renderedText = (await page.locator('main, header, footer').allInnerTexts()).join(' ');
+    expect(renderedText, `${route} must not use product metaphors as labels`).not.toMatch(metaphorTerms);
+    expect(renderedText, `${route} must not use banned marketing terms`).not.toMatch(bannedMarketingTerms);
+    const headings = await page.locator('h1, h2, h3').allTextContents();
+    expect(headings.every((heading) => heading.trim().length > 0)).toBe(true);
+  }
+});
+
 test('@regression: complete desktop first-read content fits at 1280 by 720', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'This is the verifier desktop baseline geometry check.');
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -267,7 +281,7 @@ test('@claim:local-deletion removes a project and a saved license from this devi
   });
   await page.reload();
   await page.getByRole('button', { name: 'Remove license from this device' }).click();
-  await expect(page.getByRole('link', { name: /Buy the \$19 lifetime unlock/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Buy the \$19 one-time license/ })).toBeVisible();
   expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith('sb_license')))).toEqual([]);
 });
 
@@ -496,7 +510,7 @@ test('@claim:one-time-unlock verifies its $19 checkout and unlocks page six plus
   await page.getByRole('button', { name: 'Start for real' }).first().click();
   await expect(page).toHaveURL('/');
   await expect(page.getByText('$19 USD')).toBeVisible();
-  await expect(page.getByRole('link', { name: /Buy the \$19 lifetime unlock/ })).toHaveAttribute('href', /api\.sociobot\.in\/api\/v1\/products\/scan-reading-pack\/checkout/);
+  await expect(page.getByRole('link', { name: /Buy the \$19 one-time license/ })).toHaveAttribute('href', /api\.sociobot\.in\/api\/v1\/products\/scan-reading-pack\/checkout/);
   await page.evaluate(() => {
     localStorage.setItem('sb_license:scan-reading-pack', 'test-valid-license');
     localStorage.setItem('sb_license_verdict:scan-reading-pack', JSON.stringify({ token: 'test-valid-license', valid: true, checkedAt: Date.now() }));
@@ -529,7 +543,7 @@ test('@claim:daily-license-check rechecks an active license only after 24 hours'
     localStorage.setItem('sb_license_verdict:scan-reading-pack', JSON.stringify({ token: 'daily-license', valid: true, checkedAt: Date.now() - 86_400_000 + 1_000 }));
   });
   await page.reload();
-  await expect(page.getByText('Full pack unlocked')).toBeVisible();
+  await expect(page.getByText('Paid features active')).toBeVisible();
   expect(verifyRequests).toBe(0);
   await page.evaluate(() => {
     const key = 'sb_license_verdict:scan-reading-pack';
@@ -538,7 +552,7 @@ test('@claim:daily-license-check rechecks an active license only after 24 hours'
     localStorage.setItem(key, JSON.stringify(cached));
   });
   await page.reload();
-  await expect(page.getByText('Full pack unlocked')).toBeVisible();
+  await expect(page.getByText('Paid features active')).toBeVisible();
   expect(verifyRequests).toBe(1);
   await page.reload();
   expect(verifyRequests).toBe(1);
@@ -559,8 +573,8 @@ test('@claim:refund-revocation removes paid access after a revoked verdict', asy
   });
   await page.reload();
   await expect(page.getByText('This license is no longer active because billing reported it as revoked.')).toBeVisible();
-  await expect(page.getByText('Full pack unlocked')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: /Buy the \$19 lifetime unlock/ })).toBeVisible();
+  await expect(page.getByText('Paid features active')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /Buy the \$19 one-time license/ })).toBeVisible();
   const cached = await page.evaluate(() => JSON.parse(localStorage.getItem('sb_license_verdict:scan-reading-pack')!));
   expect(cached).toMatchObject({ token: 'refunded-license', valid: false, reason: 'revoked' });
   await seedSixPageProject(page, 'Six-page revoked');

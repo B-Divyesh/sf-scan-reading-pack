@@ -42,7 +42,7 @@ scripts. License verification and checkout contact the Sociobot API only when
 a visitor chooses those actions.
 
 The free edition recognizes five pages per project and keeps correction,
-backup, and core reading-pack export available. A **$19 USD one-time unlock**
+backup, and core reading-pack export available. A **$19 USD one-time license**
 adds unlimited-page OCR and SSML export. See `/privacy/` and `/terms/`.
 
 For a staging billing build:

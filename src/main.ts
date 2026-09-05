@@ -49,13 +49,13 @@ function header(back = false): string {
       ${back ? '<button class="text-button" id="back-home">← Library</button>' : `<a href="${howHref}">How it works</a>`}
       <a href="/demo/">Demo</a>
       <a href="/privacy/">Privacy</a>
-      <span class="local-badge"><i></i>${navigator.onLine ? 'Local-first' : 'Offline'}</span>
+      <span class="local-badge"><i></i>${navigator.onLine ? 'Stored here' : 'Offline'}</span>
     </nav>
   </header>`;
 }
 
 function footer(): string {
-  return `<footer><div><strong>Scan Reading Pack</strong><p>Trace text back to the source page before you rely on it.</p></div><div class="footer-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><span>Built by Param Factory · build 1.0.3</span><span>Original generated illustration · © 2026 Sociobot</span></div></footer>`;
+  return `<footer><div><strong>Scan Reading Pack</strong><p>Trace text back to the source page before you rely on it.</p></div><div class="footer-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><span>Built by Param Factory · build 1.0.4</span><span>Original generated illustration · © 2026 Sociobot</span></div></footer>`;
 }
 
 function statusRegions(): string {
@@ -77,7 +77,7 @@ function landing(): void {
   app.innerHTML = `${header()}${statusRegions()}<main id="main" tabindex="-1">
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow"><span>01</span> Verifiable OCR workshop</p>
+        <p class="eyebrow"><span>01</span> Local scan-to-text tool</p>
         <h1>Make reading packs from <em>scanned pages.</em></h1>
         <p class="lede">For readers with scanned books or reports who need selectable text linked to its source page.</p>
         <div class="hero-actions">
@@ -96,18 +96,18 @@ function landing(): void {
     </section>
 
     <section class="library-section" aria-labelledby="library-title">
-      <div class="section-heading"><div><p class="eyebrow"><span>02</span> Your local library</p><h2 id="library-title">Continue a reading pack</h2></div>${documents.length ? '<button class="secondary-button" id="backup-all">Export project data</button>' : ''}</div>
-      ${documents.length ? `<ul class="document-list">${docRows}</ul>` : `<div class="empty-library"><span class="empty-glyph">⌁</span><div><h3>No scans on the bench</h3><p>Choose a scan above. Its pages, recognition, and corrections will reappear here after a refresh.</p></div></div>`}
+      <div class="section-heading"><div><p class="eyebrow"><span>02</span> Saved reading packs</p><h2 id="library-title">Continue a reading pack</h2></div>${documents.length ? '<button class="secondary-button" id="backup-all">Export project data</button>' : ''}</div>
+      ${documents.length ? `<ul class="document-list">${docRows}</ul>` : `<div class="empty-library"><span class="empty-glyph">⌁</span><div><h3>No scans saved</h3><p>Choose a scan above. Its pages, recognition, and corrections will reappear here after a refresh.</p></div></div>`}
       <div class="restore-row"><label class="text-button file-button" for="restore-input">Import project backup</label><input class="visually-hidden" id="restore-input" type="file" accept="application/json" /></div>
     </section>
 
     <section class="steps-section" id="how" aria-labelledby="how-title">
-      <p class="eyebrow"><span>03</span> From image to evidence</p><h2 id="how-title">A reading pack, not a text dump</h2>
+      <p class="eyebrow"><span>03</span> Reading pack steps</p><h2 id="how-title">Make a reading pack in four steps</h2>
       <ol class="steps">
         <li><span>01</span>${icon('scan')}<h3>Recognize locally</h3><p>English OCR runs in your browser. The first use caches language files for later offline work.</p></li>
-        <li><span>02</span>${icon('trace')}<h3>Follow the trace</h3><p>Select any line to reveal its source page and exact region. Extract figures with a crop gesture.</p></li>
-        <li><span>03</span>${icon('check')}<h3>Review uncertainty</h3><p>Low-confidence lines form a short correction queue. Changed lines keep their original confidence.</p></li>
-        <li><span>04</span>${icon('audio')}<h3>Pack for reading</h3><p>Export Markdown, HTML, figures, coordinates, plain text, and optional SSML in one ZIP.</p></li>
+        <li><span>02</span>${icon('trace')}<h3>Show each line on its source page</h3><p>Select any line to reveal its source page and exact region. Extract figures with a crop gesture.</p></li>
+        <li><span>03</span>${icon('check')}<h3>Review low-confidence lines</h3><p>Low-confidence lines form a short correction queue. Changed lines keep their original confidence.</p></li>
+        <li><span>04</span>${icon('audio')}<h3>Export the reading pack</h3><p>Export Markdown, HTML, figures, coordinates, plain text, and optional SSML in one ZIP.</p></li>
       </ol>
     </section>
 
@@ -122,11 +122,11 @@ function landing(): void {
 }
 
 function pricingSection(): string {
-  if (demoMode) return `<section class="pricing-section" aria-labelledby="demo-next-title"><div><p class="eyebrow"><span>04</span> Demo workspace</p><h2 id="demo-next-title">Try the trace, then start your own pack.</h2><p>This demo contains one preloaded page. Start for real to import scans into your personal browser library.</p></div><div class="license-panel"><p class="license-active">${icon('check')} Sample pack ready</p><p>Demo projects are separate from your library and are discarded when you leave.</p><button class="primary-button" id="start-real-panel">Start for real</button></div></section>`;
+  if (demoMode) return `<section class="pricing-section" aria-labelledby="demo-next-title"><div><p class="eyebrow"><span>04</span> Sample reading pack</p><h2 id="demo-next-title">Try the sample, then import your scans</h2><p>This demo contains one preloaded page. Start for real to import scans into your personal browser library.</p></div><div class="license-panel"><p class="license-active">${icon('check')} Sample reading pack ready</p><p>Demo projects are separate from your library and are discarded when you leave.</p><button class="primary-button" id="start-real-panel">Start for real</button></div></section>`;
   return `<section class="pricing-section" aria-labelledby="unlock-title">
-    <div><p class="eyebrow"><span>04</span> Desktop-quality unlock</p><h2 id="unlock-title">Free for a chapter. One-time for the shelf.</h2><p>Every project can be corrected, backed up, and exported. A one-time <strong>$19 USD</strong> license adds unlimited-page OCR and audiobook SSML export on your devices.</p></div>
+    <div><p class="eyebrow"><span>04</span> Paid license</p><h2 id="unlock-title">Free core tools and a one-time license</h2><p>Every project can be corrected, backed up, and exported. A one-time <strong>$19 USD</strong> license adds unlimited-page OCR and audiobook SSML export on your devices.</p></div>
     <div class="license-panel">
-      ${license.valid ? `<p class="license-active">${icon('check')} Full pack unlocked</p><p>Your cached license is active. It is quietly rechecked at most once a day.</p><button class="text-button" id="remove-license">Remove license from this device</button>` : `${license.token && license.reason === 'revoked' ? '<p class="license-revoked" role="status">This license is no longer active because billing reported it as revoked.</p>' : ''}<a class="primary-button" href="${checkoutUrl}">${icon('arrow')} Buy the $19 lifetime unlock</a><p class="merchant-copy">One-time purchase. Sociobot/Dodo is merchant of record; refunds are handled there.</p><form id="license-form"><label for="license-token">Already bought it? Paste your license</label><div><input id="license-token" autocomplete="off" required placeholder="License token"><button class="secondary-button" type="submit">Verify</button></div></form>`}
+      ${license.valid ? `<p class="license-active">${icon('check')} Paid features active</p><p>Your cached license is active. It is rechecked at most once a day.</p><button class="text-button" id="remove-license">Remove license from this device</button>` : `${license.token && license.reason === 'revoked' ? '<p class="license-revoked" role="status">This license is no longer active because billing reported it as revoked.</p>' : ''}<a class="primary-button" href="${checkoutUrl}">${icon('arrow')} Buy the $19 one-time license</a><p class="merchant-copy">One-time purchase. Sociobot/Dodo is merchant of record; refunds are handled there.</p><form id="license-form"><label for="license-token">Paste a license from another device</label><div><input id="license-token" autocomplete="off" required placeholder="License token"><button class="secondary-button" type="submit">Verify license</button></div></form>`}
       <p class="legal-mini"><a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a></p>
     </div>
   </section>`;
@@ -141,7 +141,7 @@ function bindLicenseControls(): void {
     notice = 'Checking your license…';
     license = await getLicenseState(true);
     if (!license.valid) error = license.reason ? `That license is ${license.reason.replaceAll('_', ' ')}.` : 'The license could not be verified. Check the token and your connection.';
-    else notice = 'Full pack unlocked on this device.';
+    else notice = 'Paid features are active on this device.';
     render();
   });
   document.querySelector('#remove-license')?.addEventListener('click', () => {
@@ -264,7 +264,7 @@ async function runRecognition(pages: ScanPage[]): Promise<void> {
   const alreadyDone = active.pages.filter((page) => page.status === 'done').length;
   const allowance = license.valid ? pages.length : Math.max(0, 5 - alreadyDone);
   if (!allowance) {
-    error = 'The free edition recognizes up to 5 pages per project. The one-time unlock removes that limit.';
+    error = 'The free edition recognizes up to 5 pages per project. The one-time license removes that limit.';
     render(); return;
   }
   const queue = pages.slice(0, allowance);
@@ -492,22 +492,22 @@ async function leaveDemo(): Promise<void> {
 
 function legalPage(kind: 'privacy' | 'terms'): void {
   const isPrivacy = kind === 'privacy';
-  app.innerHTML = `${header()}<main id="main" class="legal-page" tabindex="-1"><p class="eyebrow"><span>LEGAL</span> Effective 28 August 2026</p><h1>${isPrivacy ? 'Privacy, in plain language.' : 'Fair terms for a local tool.'}</h1>
+  app.innerHTML = `${header()}<main id="main" class="legal-page" tabindex="-1"><p class="eyebrow"><span>LEGAL</span> Effective 28 August 2026</p><h1>${isPrivacy ? 'How your data is handled' : 'Terms for Scan Reading Pack'}</h1>
     ${isPrivacy ? `<p class="legal-lede">Scan Reading Pack is designed so your books, reports, OCR text, corrections, and figure crops do not need to leave your device.</p>
     <h2>What is stored</h2><p>Imported page images, recognized text, page coordinates, figure crops, and edits are stored in your browser’s IndexedDB. A license token and a once-daily verification result are stored in localStorage. You can delete projects individually, clear site data in your browser, or export a project backup at any time.</p>
     <h2>What is sent</h2><p>OCR runs locally. We do not upload source files or extracted text. If you buy or verify a license, your browser contacts the Sociobot billing API with the license token. Checkout details are handled by Sociobot/Dodo as merchant of record under their policies.</p>
     <h2>Analytics and third parties</h2><p>This app contains no behavioral analytics, advertising trackers, third-party fonts, or runtime CDN scripts. The hosted service may retain ordinary security logs such as an IP address and request time for a limited period.</p>
-    <h2>Your choices</h2><p>Use the project delete control to remove a project, remove a license in the unlock panel, or clear this site’s storage in browser settings. Project backup files are yours to keep and protect.</p>` : `<p class="legal-lede">Use the tool for scans you are allowed to process. The software assists review; it does not certify a transcription.</p>
+    <h2>Your choices</h2><p>Delete a project from its project page. Remove a license in the paid license section. You can also clear this site’s data in your browser settings. Project backup files are yours to keep and protect.</p>` : `<p class="legal-lede">Use the tool for scans you are allowed to process. The software assists review; it does not certify a transcription.</p>
     <h2>Acceptable use</h2><p>You must have the right to copy or transform the material you import. Do not use Scan Reading Pack to remove DRM, infringe copyright, or process unlawful material.</p>
     <h2>Accuracy and responsibility</h2><p>OCR can omit, invent, or confuse characters, especially in damaged pages, unusual type, tables, mathematics, and handwriting. Page anchors and confidence labels are aids, not guarantees. Verify important quotations and accessibility-critical output against the original scan.</p>
-    <h2>License and payment</h2><p>The free edition recognizes up to five pages per project and includes correction, backup, and core reading-pack export. The $19 USD one-time unlock adds unlimited-page OCR and SSML export. Sociobot/Dodo is merchant of record. Approved refunds revoke the associated license automatically.</p>
+    <h2>License and payment</h2><p>The free edition recognizes up to five pages per project. It includes correction, backup, and core reading-pack export. The $19 USD one-time license adds unlimited-page OCR and SSML export. Sociobot/Dodo is merchant of record. Approved refunds revoke the associated license automatically.</p>
     <h2>Warranty and liability</h2><p>The service is provided “as is” without warranties to the extent permitted by law. We are not liable for lost source material, missed OCR errors, or use that violates third-party rights. Keep your original scans and project backups.</p>`}
-    <p class="legal-contact">Questions: <a href="mailto:support@sociobot.in">support@sociobot.in</a></p><a class="primary-button" href="/">Return to the workbench</a>
+    <p class="legal-contact">Questions: <a href="mailto:support@sociobot.in">support@sociobot.in</a></p><a class="primary-button" href="/">Return home</a>
   </main>${footer()}`;
 }
 
 function notFoundPage(): void {
-  app.innerHTML = `${header()}<main id="main" class="legal-page" tabindex="-1"><p class="eyebrow"><span>404</span> Page not found</p><h1>This page is not on the workbench.</h1><p class="legal-lede">Use the library to make or open a reading pack.</p><a class="primary-button" href="/">Return to the library</a></main>${footer()}`;
+  app.innerHTML = `${header()}<main id="main" class="legal-page" tabindex="-1"><p class="eyebrow"><span>404</span> Page not found</p><h1>We could not find this page</h1><p class="legal-lede">Return home to make or open a reading pack.</p><a class="primary-button" href="/">Return home</a></main>${footer()}`;
 }
 
 function render(): void {
@@ -538,7 +538,7 @@ async function start(): Promise<void> {
   window.addEventListener('online', render); window.addEventListener('offline', render);
   const updateSW = registerSW({
     onNeedRefresh() {
-      const toast = document.createElement('div'); toast.className = 'update-toast'; toast.innerHTML = '<span>A new workbench version is ready.</span><button>Update now</button>';
+      const toast = document.createElement('div'); toast.className = 'update-toast'; toast.innerHTML = '<span>A new app version is ready.</span><button>Update now</button>';
       toast.querySelector('button')!.addEventListener('click', () => updateSW(true)); document.body.append(toast);
     },
     onOfflineReady() {
